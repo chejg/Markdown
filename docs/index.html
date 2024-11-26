@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+  <title>CSV-Viewer</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="CSV-Viewer">
+  <link rel="apple-touch-icon" href="icons/256.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+.context-menu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    padding: 5px 0;
+    z-index: 1000;
+}
+
+.context-menu-item {
+    padding: 5px 20px;
+    cursor: pointer;
+}
+
+.context-menu-item:hover {
+    background-color: #f0f0f0;
+}
+
+.hidden-column {
+    display: none;
+}
+
+/* 添加列可见性指示器 */
+.visibility-indicator {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+        #file-input { display: none; }
+
+.drop-hint {
+    /* 居中定位方式1: flex布局 */
+    display: flex;
+    justify-content: center;  /* 水平居中 */
+    align-items: center;      /* 垂直居中 */
+    
+    /* 或者使用居中定位方式2: 绝对定位 */
+    /*
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    */
+
+    /* 字体样式 */
+    color: #666666;          /* 字体颜色 */
+    font-size: 20px;         /* 字体大小 */
+    
+    /* 可选:添加其他样式 */
+    height: 100vh;           /* 充满整个视窗高度 */
+    margin: 0;              /* 移除默认边距 */
+    text-align: center;     /* 文本居中 */
+}
+
+        .container.dragover {
+            background-color: #e8f5e9;
+            outline: 2px dashed #4CAF50;
+        }
+
+        #table-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            table-layout: fixed;
+        }
+
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            max-width: 600px;
+            word-wrap: break-word;
+            word-break: break-all;
+            min-width: 20px;
+            position: relative;
+            white-space: pre-line; /* 添加这行 */
+            vertical-align: top;   /* 添加这行 */
+        }
+
+        th {
+            background-color: #756f6e;
+            color: white;
+            user-select: none;
+            cursor: move;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:nth-child(even) { background-color: #f2f2f2; }
+
+        .error {
+            color: red;
+            padding: 5px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="drop-container">
+        <input type="file" id="file-input" accept=".csv,text/csv">
+        <div class="drop-hint" id="drop-hint">Click or drop CSV file to this page to open</div>
+        <div class="error" id="error-message"></div>
+        <div id="table-container"></div>
+    </div>
+
+    <script>
+        const container = document.getElementById('drop-container');
+        const fileInput = document.getElementById('file-input');
+        const dropHint = document.getElementById('drop-hint');
+        const tableContainer = document.getElementById('table-container');
+
+function parseCSV(text) {
+    const result = [];
+    let insideQuotes = false;
+    let currentField = '';
+    let currentLine = [];
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        
+        if (char === '"') {
+            if (insideQuotes && text[i + 1] === '"') {
+                // 处理双引号转义
+                currentField += '"';
+                i++;
+            } else {
+                insideQuotes = !insideQuotes;
+            }
+        } else if (char === ',' && !insideQuotes) {
+            // 如果不在引号内遇到逗号，添加字段到当前行
+            currentLine.push(currentField);
+            currentField = '';
+        } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+            // 如果不在引号内遇到换行符，完成当前行
+            if (char === '\r' && text[i + 1] === '\n') i++;
+            currentLine.push(currentField);
+            if (currentLine.length > 0) {
+                result.push(currentLine);
+            }
+            currentLine = [];
+            currentField = '';
+        } else if ((char === '\n' || char === '\r') && insideQuotes) {
+            // 如果在引号内遇到换行符，保留换行符
+            if (char === '\r' && text[i + 1] === '\n') {
+                currentField += '\n';
+                i++;
+            } else {
+                currentField += '\n';
+            }
+        } else {
+            currentField += char;
+        }
+    }
+
+    // 处理最后一个字段和行
+    if (currentField || currentField === '') {
+        currentLine.push(currentField);
+    }
+    if (currentLine.length > 0) {
+        result.push(currentLine);
+    }
+
+    return result;
+}
+
+
+
+        function createTable(data) {
+            if (!data || !data.length) {
+                showError('没有数据可显示');
+                return;
+            }
+
+            const table = document.createElement('table');
+            const header = table.createTHead();
+            const headerRow = header.insertRow();
+            const columnWidths = data[0].map((_, colIndex) => {
+                return Math.max(...data.map(row => calculateOptimalWidth(String(row[colIndex] || ''))));
+            });
+
+            data[0].forEach((text, index) => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                th.setAttribute('draggable', true);
+                th.dataset.index = index;
+                const headerWidth = calculateOptimalWidth(text);
+                const finalWidth = Math.min(Math.max(Math.max(headerWidth, columnWidths[index]), 20), 500);
+                th.style.width = `${finalWidth}px`;
+
+                th.addEventListener('dragstart', handleDragStart);
+                th.addEventListener('dragover', handleDragOver);
+                th.addEventListener('drop', handleDrop);
+
+                const resizeHandle = document.createElement('div');
+                resizeHandle.classList.add('resize-handle');
+                resizeHandle.dataset.index = index;
+                resizeHandle.addEventListener('mousedown', initResize);
+                th.appendChild(resizeHandle);
+                headerRow.appendChild(th);
+            });
+
+const tbody = table.createTBody();
+for (let i = 1; i < data.length; i++) {
+    const row = tbody.insertRow();
+    data[i].forEach((text, colIndex) => {
+        const cell = row.insertCell();
+        cell.innerHTML = text.replace(/\n/g, '<br>');
+        cell.style.width = table.tHead.rows[0].cells[colIndex].style.width;
+    });
+}
+
+            tableContainer.innerHTML = '';
+            tableContainer.appendChild(table);
+        }
+
+        function calculateOptimalWidth(content) {
+            const temp = document.createElement('span');
+            temp.style.cssText = 'visibility:hidden;position:absolute;white-space:nowrap;font:14px Arial,sans-serif;';
+            temp.textContent = content;
+            document.body.appendChild(temp);
+            const width = temp.offsetWidth;
+            document.body.removeChild(temp);
+            return width + 4;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        document.addEventListener('click', () => {
+            if (!tableContainer.querySelector('table')) fileInput.click();
+        });
+
+        fileInput.addEventListener('click', e => e.stopPropagation());
+
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            container.classList.add('dragover');
+        });
+
+        container.addEventListener('dragleave', e => {
+            e.preventDefault();
+            container.classList.remove('dragover');
+        });
+
+        container.addEventListener('drop', e => {
+            e.preventDefault();
+            container.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showError('请选择CSV文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    createTable(parseCSV(e.target.result));
+                    dropHint.style.display = 'none';
+                } catch (error) {
+                    showError('解析CSV文件时出错: ' + error.message);
+                }
+            };
+            reader.onerror = () => showError('读取文件时出错');
+            reader.readAsText(file);
+        }
+
+        let draggedTh;
+        function handleDragStart(e) {
+            draggedTh = e.target;
+            e.dataTransfer.setData('text/plain', e.target.dataset.index);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetTh = e.target.closest('th');
+            if (!targetTh || targetTh === draggedTh) return;
+
+            const fromIndex = parseInt(draggedTh.dataset.index, 10);
+            const toIndex = parseInt(targetTh.dataset.index, 10);
+
+            moveColumn(fromIndex, toIndex);
+        }
+
+        function moveColumn(fromIndex, toIndex) {
+            const table = document.querySelector('table');
+            const rows = Array.from(table.rows);
+
+            rows.forEach(row => {
+                const cells = Array.from(row.cells);
+                const cellToMove = cells[fromIndex];
+
+                // 移除要移动的单元格
+                row.removeChild(cellToMove);
+
+                // 在目标位置插入单元格
+                if (toIndex < cells.length) {
+                    row.insertBefore(cellToMove, cells[toIndex]);
+                } else {
+                    row.appendChild(cellToMove);
+                }
+            });
+
+            // 更新表头的 dataset.index
+            const headerCells = table.tHead.rows[0].cells;
+            for (let i = 0; i < headerCells.length; i++) {
+                headerCells[i].dataset.index = i;
+                headerCells[i].querySelector('.resize-handle').dataset.index = i;
+            }
+        }
+
+        let startX, startWidth, resizableThIndex;
+        function initResize(e) {
+            e.preventDefault();
+            resizableThIndex = e.target.dataset.index;
+            startX = e.clientX;
+            startWidth = e.target.parentElement.offsetWidth;
+            document.documentElement.addEventListener('mousemove', doResize);
+            document.documentElement.addEventListener('mouseup', stopResize);
+        }
+
+        function doResize(e) {
+            const table = document.querySelector('table');
+            const th = table.tHead.rows[0].cells[resizableThIndex];
+            const newWidth = Math.min(Math.max(startWidth + e.clientX - startX, 20), 500);
+            th.style.width = newWidth + 'px';
+            for (let i = 0; i < table.rows.length; i++) {
+                const cell = table.rows[i].cells[resizableThIndex];
+                if (cell) cell.style.width = newWidth + 'px';
+            }
+        }
+
+        function stopResize() {
+            document.documentElement.removeEventListener('mousemove', doResize);
+            document.documentElement.removeEventListener('mouseup', stopResize);
+        }
+     if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('ServiceWorker registration failed: ', registrationError);
+          });
+      });
+    }
+    </script>
+</body>
+</html>
+
