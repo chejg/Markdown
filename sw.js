@@ -2,8 +2,6 @@ const CACHE_NAME = 'md-editor-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/script.js',
   '/manifest.json',
   '/icons/64.png',
   '/icons/128.png',
