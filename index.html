@@ -983,45 +983,53 @@
 
       // 初始化
       updatePreview();
-	  let isEditorScrolling = false;
-let isPreviewScrolling = false;
+      let isEditorScrolling = false;
+      let isPreviewScrolling = false;
+      let editorScrollTimeout;
+      let previewScrollTimeout;
 
-// 编辑器滚动事件
-editor.addEventListener('scroll', () => {
-  if (!isPreviewScrolling) {
-    isEditorScrolling = true;
-    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-    preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight);
-    setTimeout(() => {
-      isEditorScrolling = false;
-    }, 50);
-  }
-});
-
-// 预览区域滚动事件
-preview.addEventListener('scroll', () => {
-  if (!isEditorScrolling) {
-    isPreviewScrolling = true;
-    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
-    editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight);
-    setTimeout(() => {
-      isPreviewScrolling = false;
-    }, 50);
-  }
-});
-// 注册 Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-      })
-      .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+      // 编辑器滚动事件
+      editor.addEventListener('scroll', () => {
+        if (!isPreviewScrolling) {
+          isEditorScrolling = true;
+          clearTimeout(editorScrollTimeout);
+          editorScrollTimeout = setTimeout(() => {
+            requestAnimationFrame(() => {
+              const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+              preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight);
+              isEditorScrolling = false;
+            });
+          }, 50);
+        }
       });
-  });
-}
 
+      // 预览区域滚动事件
+      preview.addEventListener('scroll', () => {
+        if (!isEditorScrolling) {
+          isPreviewScrolling = true;
+          clearTimeout(previewScrollTimeout);
+          previewScrollTimeout = setTimeout(() => {
+            requestAnimationFrame(() => {
+              const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+              editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight);
+              isPreviewScrolling = false;
+            });
+          }, 50);
+        }
+      });
+
+      // 注册 Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful');
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
     </script>
   </body>
 </html>
