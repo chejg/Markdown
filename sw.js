@@ -5,6 +5,8 @@ const urlsToCache = [
   '/styles.css',
   '/script.js',
   '/manifest.json',
+  '/icons/64.png',
+  '/icons/128.png',
   'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
   'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css',
   'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js'
@@ -60,7 +62,10 @@ self.addEventListener('fetch', event => {
             
             return response;
           }
-        );
+        ).catch(() => {
+          // 处理网络请求失败的情况
+          return caches.match('/index.html');
+        });
       })
   );
 });
