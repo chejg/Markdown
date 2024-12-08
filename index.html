@@ -1,287 +1,66 @@
+const CACHE_NAME = 'md-editor-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/script.js',
+  '/manifest.json',
+  'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+  'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css',
+  'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js'
+  // 添加其他需要缓存的资源
+];
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Markdown Reader</title>
-    <meta name="description" content="A simple markdown reader and editor">
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWFya2Rvd24gUmVhZGVyIiwic2hvcnRfbmFtZSI6Ik1EIFJlYWRlciIsImRlc2NyaXB0aW9uIjoiQSBzaW1wbGUgbWFya2Rvd24gcmVhZGVyIGFuZCBlZGl0b3IiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzRDQUY1MCIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBEOTRiV3dnZG1WeWMybHZiajBpTVM0d0lpQmxibU52WkdsdVp6MGlkWFJtTFRnaVB6NEtQSE4yWnlCM2FXUjBhRDBpTlRBd0lpQm9aV2xuYUhROUlqVXdNQ0lnZG1sbGQwSnZlRDBpTUNBd0lEVXdNQ0ExTURBaUlIaHRiRzV6UFNKb2RIUndPaTh2ZDNkM0xuY3pMbTl5Wnk4eU1EQXdMM04yWnlJZ2VHMXNibk02ZUd4cGJtczlJbWgwZEhBNkx5OTNkM2N1ZHpNdWIzSm5MekU1T1RrdmVHeHBibXNpUGdvZ0lEeHdZWFJvSUdacGJHdzlJaU16TXpNaUlHUTlJazAxTVRJZ05qUkRNalkwTGpZZ05qUWdOalFnTWpZMExqWWdOalFnTlRFeWN6SXdNQzQySURRME9DQTBORGdnTkRRNElEUTBPQzB5TURBdU5pQTBORGd0TkRRNFV6YzFPUzQwSURZMElEVXhNaUEyTkhwdE1DQTRNakJqTFRJd05TNDBJREF0TXpjeUxURTJOaTQyTFRNM01pMHpOekp6TVRZMkxqWXRNemN5SURNM01pMHpOeklnTXpjeUlERTJOaTQySURNM01pQXpOekl0TVRZMkxqWWdNemN5TFRNM01pQXpOeko2SWk4K0NpQWdQSEJoZEdnZ1ptbHNiRDBpSTBaR1JrWkdSaUlnWkQwaVRUVXhNaUF4TkRCakxUSXdOUzQwSURBdE16Y3lJREUyTmk0MkxUTTNNaUF6TnpKek1UWTJMallnTXpjeUlETTNNaUF6TnpJZ016Y3lMVEUyTmk0MklETTNNaTB6TnpJdE1UWTJMall0TXpjeUxUTTNNaTB6TnpKNlRUSTRPQ0ExTVRKak5EZ3VNaUF3SURnd0xqTXROREl1TVNBNE1DMHpOekp6TFRRMkxqVXRPREF1TXkwNE1DMHpOekl0T0RBdE16Y3llaUl2UGdvOEwzTjJaejQ9IiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJzaXplcyI6IjUwMHg1MDAifV19">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.0/marked.min.js"></script>
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        margin: 0;
-        padding: 10px;
-        max-width: 1200px;
-        margin: 0 auto;
-        background-color: #f5f5f5;
-      }
-      .header {
-        background-color: white;
-        padding: 8px 16px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
-      }
-      .title {
-        font-size: 1.2em;
-        margin: 0;
-        color: #333;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-top: 8px;
-      }
-      .button {
-        padding: 6px 12px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        transition: background-color 0.2s;
-      }
-      .button:hover {
-        background-color: #45a049;
-      }
-      .button svg {
-        width: 16px;
-        height: 16px;
-      }
-      .container {
-        display: flex;
-        gap: 10px;
-        height: calc(100vh - 100px);
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        padding: 10px;
-      }
-      #editor {
-        width: 50%;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 15px;
-        resize: none;
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-        font-size: 14px;
-        line-height: 1.6;
-        display: none;
-      }
-      #preview {
-        width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 15px;
-        overflow-y: auto;
-        background-color: white;
-      }
-      #preview.editing {
-        width: 50%;
-      }
-      #preview:focus {
-        outline: 2px solid #4CAF50;
-      }
-      /* Markdown 样式优化 */
-      #preview h1 { font-size: 1.8em; margin: 0.5em 0; }
-      #preview h2 { font-size: 1.4em; margin: 0.5em 0; }
-      #preview h3 { font-size: 1.2em; margin: 0.5em 0; }
-      #preview p { margin: 0.8em 0; line-height: 1.6; }
-      #preview code { 
-        background-color: #f8f8f8; 
-        padding: 2px 4px; 
-        border-radius: 3px;
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-        font-size: 0.9em;
-      }
-      #preview pre { 
-        background-color: #f8f8f8; 
-        padding: 12px; 
-        border-radius: 4px; 
-        overflow-x: auto;
-        border: 1px solid #eee;
-      }
-      #preview blockquote { 
-        border-left: 4px solid #4CAF50; 
-        margin: 0;
-        padding: 0.5em 1em;
-        background-color: #f8f8f8;
-      }
-      #preview img { 
-        max-width: 100%; 
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      #preview table { 
-        border-collapse: collapse; 
-        width: 100%; 
-        margin: 1em 0;
-        font-size: 0.9em;
-      }
-      #preview th, #preview td { 
-        border: 1px solid #ddd; 
-        padding: 8px; 
-        text-align: left; 
-      }
-      #preview th { 
-        background-color: #f8f8f8;
-        font-weight: 600;
-      }
-      #preview tr:nth-child(even) {
-        background-color: #f8f8f8;
-      }
-      @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-          height: auto;
+// 安装 Service Worker
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// 激活 Service Worker
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+// 处理请求
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
         }
-        #editor, #preview.editing {
-          width: 100%;
-          height: 300px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <h1 class="title">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <path d="M14 2v6h6"/>
-          <path d="M16 13H8"/>
-          <path d="M16 17H8"/>
-          <path d="M10 9H8"/>
-        </svg>
-        Markdown Reader
-      </h1>
-      <div class="controls">
-        <input type="file" id="fileInput" accept=".md, .markdown, .txt" style="display: none;">
-        <button class="button" onclick="document.getElementById('fileInput').click()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          打开
-        </button>
-        <button class="button" id="toggleEditButton">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-          </svg>
-          编辑
-        </button>
-        <button class="button" id="saveButton" style="display: none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-            <polyline points="17 21 17 13 7 13 7 21"/>
-            <polyline points="7 3 7 8 15 8"/>
-          </svg>
-          保存
-        </button>
-      </div>
-    </div>
-    
-    <div class="container">
-      <textarea id="editor" placeholder="输入 Markdown 内容..."></textarea>
-      <div id="preview" contenteditable="false"></div>
-    </div>
-
-    <script>
-      const editor = document.getElementById('editor');
-      const preview = document.getElementById('preview');
-      const fileInput = document.getElementById('fileInput');
-      const toggleEditButton = document.getElementById('toggleEditButton');
-      const saveButton = document.getElementById('saveButton');
-      let isEditMode = false;
-      let originalContent = '';
-
-      // 注册 Service Worker
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-        });
-      }
-
-      // 标记配置
-      marked.setOptions({
-        breaks: true,
-        gfm: true
-      });
-
-      function updatePreview() {
-        const markdownText = editor.value;
-        const htmlText = marked.parse(markdownText);
-        preview.innerHTML = htmlText;
-      }
-
-      function toggleEditMode() {
-        isEditMode = !isEditMode;
-        if (isEditMode) {
-          editor.style.display = 'block';
-          preview.classList.add('editing');
-          toggleEditButton.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            预览`;
-          saveButton.style.display = 'inline-flex';
-        } else {
-          editor.style.display = 'none';
-          preview.classList.remove('editing');
-          toggleEditButton.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-            </svg>
-            编辑`;
-          saveButton.style.display = 'none';
-          updatePreview();
-        }
-      }
-
-      fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            originalContent = e.target.result;
-            editor.value = originalContent;
-            updatePreview();
-          };
-          reader.readAsText(file);
-        }
-      });
-
-      toggleEditButton.addEventListener('click', toggleEditMode);
-
-      saveButton.addEventListener('click', () => {
-        const content = editor.value;
-        const blob = new Blob([content], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'markdown-content.md';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      });
-
-      editor.addEventListener('input', updatePreview);
-
-      // 初始化预览
-      updatePreview();
-    </script>
-  </body>
-</html>
+        return fetch(event.request).then(
+          response => {
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            
+            const responseToCache = response.clone();
+            
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            
+            return response;
+          }
+        );
+      })
+  );
+});
