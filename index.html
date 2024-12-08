@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json?v=1">
     <meta name="theme-color" content="#4a90e2">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MD Editor">
     <link rel="apple-touch-icon" href="icons/128.png">
@@ -11,7 +12,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Markdown Editor</title>
     <meta name="description" content="A simple markdown editor and reader" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-highlight/2.0.1/marked-highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-mangle/1.1.0/marked-mangle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-gfm-heading-id/3.1.0/marked-gfm-heading-id.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
@@ -651,29 +655,13 @@
       marked.setOptions({
         breaks: true,
         gfm: true,
-        // highlight 配置已弃用，需要使用 marked-highlight
-        // highlight: function (code, lang) {
-        //   if (Prism.languages[lang]) {
-        //     return Prism.highlight(code, Prism.languages[lang], lang);
-        //   }
-        //   return code;
-        // },
+        highlight: function (code, lang) {
+          if (Prism.languages[lang]) {
+            return Prism.highlight(code, Prism.languages[lang], lang);
+          }
+          return code;
+        },
       });
-
-      // 使用 marked-highlight 扩展
-      marked.use(markedHighlight({
-        langPrefix: 'language-',
-        highlight(code, lang) {
-          const language = Prism.languages[lang] ? lang : 'plaintext';
-          return Prism.highlight(code, Prism.languages[language], language);
-        }
-      }));
-
-      // 使用 marked-mangle 扩展
-      marked.use(markedMangle());
-
-      // 使用 marked-gfm-heading-id 扩展
-      marked.use(markedGfmHeadingId());
 
       // 更新预览
       function updatePreview() {
@@ -701,7 +689,7 @@
         modalInput1.focus();
       }
 
-      // 关闭模态框
+      // 关���模态框
       function closeModal() {
         modal.style.display = "none";
         modalCallback = null;
