@@ -2,7 +2,7 @@
   "name": "Markdown Editor",
   "short_name": "MD Editor",
   "description": "A simple and elegant Markdown editor",
-  "start_url": "/",
+  "start_url": "/markdown-editor/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4a90e2",
