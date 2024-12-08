@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="manifest" href="/manifest.json?v=1">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4a90e2">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MD Editor">
-    <link rel="apple-touch-icon" href="icons/128.png">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Markdown Editor</title>
     <meta name="description" content="A simple markdown editor and reader" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-highlight/2.0.1/marked-highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-mangle/1.1.0/marked-mangle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked-gfm-heading-id/3.1.0/marked-gfm-heading-id.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
@@ -689,7 +685,7 @@
         modalInput1.focus();
       }
 
-      // 关���模态框
+      // 关闭模态框
       function closeModal() {
         modal.style.display = "none";
         modalCallback = null;
@@ -987,54 +983,45 @@
 
       // 初始化
       updatePreview();
-      let isEditorScrolling = false;
-      let isPreviewScrolling = false;
-      let editorScrollTimeout;
-      let previewScrollTimeout;
+	  let isEditorScrolling = false;
+let isPreviewScrolling = false;
 
-      // 编辑器滚动事件
-      editor.addEventListener('scroll', () => {
-        if (!isPreviewScrolling) {
-          isEditorScrolling = true;
-          clearTimeout(editorScrollTimeout);
-          editorScrollTimeout = setTimeout(() => {
-            requestAnimationFrame(() => {
-              const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-              preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight);
-              isEditorScrolling = false;
-            });
-          }, 50);
-        }
+// 编辑器滚动事件
+editor.addEventListener('scroll', () => {
+  if (!isPreviewScrolling) {
+    isEditorScrolling = true;
+    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+    preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight);
+    setTimeout(() => {
+      isEditorScrolling = false;
+    }, 50);
+  }
+});
+
+// 预览区域滚动事件
+preview.addEventListener('scroll', () => {
+  if (!isEditorScrolling) {
+    isPreviewScrolling = true;
+    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+    editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight);
+    setTimeout(() => {
+      isPreviewScrolling = false;
+    }, 50);
+  }
+});
+// 注册 Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful');
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed: ', err);
       });
+  });
+}
 
-      // 预览区域滚动事件
-      preview.addEventListener('scroll', () => {
-        if (!isEditorScrolling) {
-          isPreviewScrolling = true;
-          clearTimeout(previewScrollTimeout);
-          previewScrollTimeout = setTimeout(() => {
-            requestAnimationFrame(() => {
-              const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
-              editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight);
-              isPreviewScrolling = false;
-            });
-          }, 50);
-        }
-      });
-
-      // 注册 Service Worker
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('ServiceWorker registration successful');
-            })
-            .catch(err => {
-              console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-      }
     </script>
   </body>
 </html>
-
