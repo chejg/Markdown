@@ -10,7 +10,7 @@ const urlsToCache = [
   'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
   'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css',
   'https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js'
-  // 添加其他需要缓存的资源
+  // 添加其他需要缓存的资源   
 ];
 
 // 安装 Service Worker
@@ -49,10 +49,7 @@ self.addEventListener('fetch', event => {
         }
         return fetch(event.request).then(
           response => {
-            if(!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-            
+            // 缓存任何有效的响应
             const responseToCache = response.clone();
             
             caches.open(CACHE_NAME)
