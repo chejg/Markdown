@@ -1,1027 +1,992 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4a90e2">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="MD Editor">
-    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Editor</title>
-    <meta name="description" content="A simple markdown editor and reader" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.0/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
-    />
+    <!-- Libraries -->
+    <script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/contrib/auto-render.min.js"></script>
+    <link rel="manifest" id="manifest-placeholder">
     <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        margin: 0;
-        padding: 10px;
-        max-width: 1920px; /* 增大页面最大宽度 */
-        margin: 0 auto;
-        background-color: #f5f5f5;
-      }
-      .header {
-        background-color: white;
-        padding: 8px 16px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 10px;
-      }
-      .title {
-        font-size: 1.2em;
-        margin: 0;
-        color: #333;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-top: 8px;
-      }
-      .button {
-        padding: 6px 12px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        transition: background-color 0.2s;
-      }
-      .button:hover {
-        background-color: #45a049;
-      }
-      .button svg {
-        width: 16px;
-        height: 16px;
-      }
-      .container {
-        display: flex;
-        gap: 10px;
-        height: calc(100vh - 140px);
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 10px;
-      }
-      #editor {
-        width: 50%;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 15px;
-        resize: vertical; /* 只允许垂直调整大小 */
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
-          monospace;
-        font-size: 14px;
-        line-height: 1.6;
-        display: none;
-        overflow: auto;
-      }
-      #preview {
-        width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 15px;
-        overflow-y: auto;
-        background-color: white;
-      }
-      #preview.editing {
-        width: 50%;
-      }
-      #preview:focus {
-        outline: 2px solid #4caf50;
-      }
-      .toolbar {
-        display: none;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 8px;
-        background-color: white;
-        padding: 8px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .toolbar.active {
-        display: flex;
-      }
-      .toolbar-group {
-        display: flex;
-        gap: 4px;
-        padding-right: 8px;
-        margin-right: 8px;
-        border-right: 1px solid #ddd;
-      }
-      .toolbar-group:last-child {
-        border-right: none;
-      }
-      .toolbar-button {
-        padding: 4px 8px;
-        background-color: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .toolbar-button:hover {
-        background-color: #e0e0e0;
-      }
-      .toolbar-button svg {
-        width: 16px;
-        height: 16px;
-      }
-      /* Markdown 样式优化 */
-      #preview {
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-      }
-      #preview h1 {
-        font-size: 2em;
-        margin: 0.8em 0 0.4em;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 0.2em;
-      }
-      #preview h2 {
-        font-size: 1.6em;
-        margin: 0.8em 0 0.4em;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.2em;
-      }
-      #preview h3 {
-        font-size: 1.3em;
-        margin: 0.6em 0 0.3em;
-      }
-      #preview h4 {
-        font-size: 1.1em;
-        margin: 0.5em 0 0.2em;
-      }
-      #preview p {
-        margin: 1em 0;
-      }
-      #preview ul,
-      #preview ol {
-        margin: 1em 0;
-        padding-left: 2em;
-      }
-      #preview li {
-        margin: 0.5em 0;
-      }
-      #preview code {
-        background-color: #f8f8f8;
-        padding: 0.2em 0.4em;
-        border-radius: 3px;
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
-          monospace;
-        font-size: 0.9em;
-      }
-      #preview pre {
-        background-color: #f8f8f8;
-        padding: 1em;
-        border-radius: 4px;
-        overflow-x: auto;
-        border: 1px solid #eee;
-        margin: 1em 0;
-      }
-      #preview pre code {
-        background: none;
-        padding: 0;
-        font-size: 0.9em;
-        line-height: 1.5;
-      }
-      #preview blockquote {
-        border-left: 4px solid #4caf50;
-        margin: 1em 0;
-        padding: 0.5em 1em;
-        background-color: #f8f8f8;
-        color: #666;
-      }
-      #preview img {
-        max-width: 100%;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin: 1em 0;
-      }
-      #preview table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 1em 0;
-        font-size: 0.9em;
-      }
-      #preview th,
-      #preview td {
-        border: 1px solid #ddd;
-        padding: 8px 12px;
-        text-align: left;
-      }
-      #preview th {
-        background-color: #f8f8f8;
-        font-weight: 600;
-      }
-      #preview tr:nth-child(even) {
-        background-color: #f8f8f8;
-      }
-      #preview hr {
-        border: none;
-        border-top: 2px solid #eee;
-        margin: 2em 0;
-      }
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-      }
-      .modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        max-width: 500px;
-        width: 90%;
-      }
-      .modal-title {
-        margin: 0 0 15px 0;
-        font-size: 1.2em;
-      }
-      .modal-input {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-      .modal-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-      }
-      @media (max-width: 768px) {
-        /* 响应式调整 */
-        .container {
-          flex-direction: column;
-          height: auto;
+        :root {
+            --sidebar-bg: #24292e;
+            --toolbar-bg: #f1f1f1;
+            --editor-bg: #f6f8fa;
+            --border-color: #ddd;
+            --text-color: #24292e;
+            --link-color: #0366d6;
+            --blockquote-color: #6a737d;
+            --code-bg: rgba(27,31,35,0.05);
+            --table-border: #dfe2e5;
+            --table-alt-bg: #f6f8fa;
+            --button-hover: #e1e4e8;
         }
-        #editor,
-        #preview.editing {
-          width: 100%;
-          height: 300px;
+
+        * {
+            box-sizing: border-box;
         }
-        .toolbar-group {
-          border-right: none;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 8px;
-          margin-bottom: 8px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            background-color: #f5f5f5;
+            color: var(--text-color);
         }
-      }
+
+        #sidebar {
+            width: 40px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+
+        #sidebar button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        #sidebar button:hover {
+            background-color: #444;
+        }
+
+        #main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #dropzone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.2s;
+        }
+
+        #dropzone:hover {
+            background-color: #e9e9e9;
+        }
+
+        #dropzone-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #999;
+        }
+
+        #editor-container {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: row;
+        }
+
+        #editor-section {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        #toolbar {
+            background-color: var(--toolbar-bg);
+            padding: 5px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        #toolbar button {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            color: #333;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            padding: 3px 5px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        #toolbar button:hover {
+            background-color: var(--button-hover);
+        }
+
+        #editor {
+            flex: 1;
+            overflow: auto;
+            padding: 15px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: none;
+            resize: none;
+            background-color: var(--editor-bg);
+            tab-size: 4;
+        }
+
+        #preview-container {
+            width: 50%;
+            height: 100%;
+            overflow: auto;
+            padding: 0;
+            background-color: white;
+        }
+
+        #preview {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-color);
+            word-wrap: break-word;
+        }
+
+        /* GitHub-style Markdown */
+        #preview h1, #preview h2 {
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #preview h1 {
+            font-size: 2em;
+        }
+
+        #preview h2 {
+            font-size: 1.5em;
+        }
+
+        #preview h3 {
+            font-size: 1.25em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #preview h4 {
+            font-size: 1em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #preview h5 {
+            font-size: 0.875em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #preview h6 {
+            font-size: 0.85em;
+            color: #6a737d;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #preview blockquote {
+            padding: 0 1em;
+            color: var(--blockquote-color);
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0 0 16px 0;
+        }
+
+        #preview pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: var(--editor-bg);
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        #preview code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: var(--code-bg);
+            border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        #preview pre code {
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+
+        #preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+            display: block;
+            overflow-x: auto;
+        }
+
+        #preview table th, #preview table td {
+            padding: 6px 13px;
+            border: 1px solid var(--table-border);
+        }
+
+        #preview table tr {
+            background-color: #fff;
+            border-top: 1px solid #c6cbd1;
+        }
+
+        #preview table tr:nth-child(2n) {
+            background-color: var(--table-alt-bg);
+        }
+
+        #preview img {
+            max-width: 100%;
+            box-sizing: content-box;
+            background-color: #fff;
+        }
+
+        #preview p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #preview a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        #preview a:hover {
+            text-decoration: underline;
+        }
+
+        #preview ul, #preview ol {
+            padding-left: 2em;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #preview li+li {
+            margin-top: 0.25em;
+        }
+
+        #preview hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+
+        #preview .task-list-item {
+            list-style-type: none;
+        }
+
+        #preview .task-list-item-checkbox {
+            margin: 0 0.2em 0.25em -1.6em;
+            vertical-align: middle;
+        }
+
+        /* PWA Installation Banner */
+        #pwa-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 10px 20px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        #pwa-banner button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #pwa-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            #editor-container {
+                flex-direction: column;
+            }
+
+            #editor-section, #preview-container {
+                width: 100%;
+                height: 50%;
+            }
+
+            #editor-section {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div class="header">
-      <div class="controls">
-        <h1 class="title">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-            />
-            <path d="M14 2v6h6" />
-            <path d="M16 13H8" />
-            <path d="M16 17H8" />
-            <path d="M10 9H8" />
-          </svg>
-          Markdown Editor
-        </h1>
-        <input
-          type="file"
-          id="fileInput"
-          accept=".md, .markdown, .txt"
-          style="display: none;"
-        />
-        <button
-          class="button"
-          onclick="document.getElementById('fileInput').click()"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-            />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-          打开
-        </button>
-        <button class="button" id="toggleEditButton">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-          </svg>
-          编辑
-        </button>
-        <button class="button" id="saveButton" style="display: none;">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-            />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
-          保存
-        </button>
-      </div>
+    <link rel="manifest" id="manifest-placeholder">
+</head>
+<body>
+    <div id="sidebar">
+        <button id="open-btn" title="Open file">📂</button>
+        <button id="edit-btn" title="Edit mode" style="display: none;">✏️</button>
+        <button id="save-btn" title="Save file" style="display: none;">💾</button>
+        <button id="new-btn" title="New file" style="display: none;">📄</button>
     </div>
-
-    <div class="toolbar" id="toolbar">
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="h1" title="一级标题">
-          H1
-        </button>
-        <button class="toolbar-button" data-format="h2" title="二级标题">
-          H2
-        </button>
-        <button class="toolbar-button" data-format="h3" title="三级标题">
-          H3
-        </button>
-      </div>
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="bold" title="加粗">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
-            <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="italic" title="斜体">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <line x1="19" y1="4" x2="10" y2="4" />
-            <line x1="14" y1="20" x2="5" y2="20" />
-            <line x1="15" y1="4" x2="9" y2="20" />
-          </svg>
-        </button>
-        <button
-          class="toolbar-button"
-          data-format="strikethrough"
-          title="删除线"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path
-              d="M17.3 4.9c-2.3-.6-4.4-1-6.2-.9-2.7 0-5.3.7-5.3 3.6 0 1.5 1.8 3.3 3.6 3.9h.2m8.2 3.7c.3.4.4.8.4 1.3 0 2.9-2.7 3.6-5.3 3.6-2.2 0-4.1-.4-6.2-.9"
-            />
-            <line x1="4" y1="12" x2="20" y2="12" />
-          </svg>
-        </button>
-      </div>
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="link" title="链接">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path
-              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-            />
-            <path
-              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-            />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="image" title="图片">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-        </button>
-      </div>
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="ul" title="无序列表">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <line x1="8" y1="6" x2="21" y2="6" />
-            <line x1="8" y1="12" x2="21" y2="12" />
-            <line x1="8" y1="18" x2="21" y2="18" />
-            <line x1="3" y1="6" x2="3.01" y2="6" />
-            <line x1="3" y1="12" x2="3.01" y2="12" />
-            <line x1="3" y1="18" x2="3.01" y2="18" />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="ol" title="有序列表">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <line x1="10" y1="6" x2="21" y2="6" />
-            <line x1="10" y1="12" x2="21" y2="12" />
-            <line x1="10" y1="18" x2="21" y2="18" />
-            <path d="M4 6h1v4" />
-            <path d="M4 10h2" />
-            <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="quote" title="引用">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path
-              d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"
-            />
-            <path
-              d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"
-            />
-          </svg>
-        </button>
-      </div>
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="code" title="代码">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <polyline points="16 18 22 12 16 6" />
-            <polyline points="8 6 2 12 8 18" />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="codeblock" title="代码块">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path
-              d="M21 3H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"
-            />
-            <line x1="7" y1="8" x2="3" y2="12" />
-            <line x1="7" y1="16" x2="3" y2="12" />
-            <line x1="17" y1="8" x2="21" y2="12" />
-            <line x1="17" y1="16" x2="21" y2="12" />
-          </svg>
-        </button>
-      </div>
-      <div class="toolbar-group">
-        <button class="toolbar-button" data-format="table" title="表格">
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-          >
-            <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
-          </svg>
-        </button>
-        <button class="toolbar-button" data-format="hr" title="分割线">—</button>
-      </div>
-    </div>
-
-    <div class="container">
-      <textarea id="editor" placeholder="输入 Markdown 内容..."></textarea>
-      <div id="preview" contenteditable="false"></div>
-    </div>
-
-    <!-- 模态框 -->
-    <div id="modal" class="modal">
-      <div class="modal-content">
-        <h3 class="modal-title" id="modalTitle">插入链接</h3>
-        <input type="text" id="modalInput1" class="modal-input" placeholder="URL" />
-        <input
-          type="text"
-          id="modalInput2"
-          class="modal-input"
-          placeholder="标题（可选）"
-        />
-        <div class="modal-buttons">
-          <button class="button" id="modalCancel">取消</button>
-          <button class="button" id="modalConfirm">确定</button>
+    <div id="main-container">
+        <div id="dropzone">
+            <div id="dropzone-icon">📄</div>
+            <div>Click or drop a markdown file here to open</div>
         </div>
-      </div>
+        <div id="editor-container">
+            <div id="editor-section">
+                <div id="toolbar">
+                    <button title="Bold" onclick="insertMarkdown('**', '**')"><b>B</b></button>
+                    <button title="Italic" onclick="insertMarkdown('*', '*')"><i>I</i></button>
+                    <button title="Heading 1" onclick="insertHeading(1)">H1</button>
+                    <button title="Heading 2" onclick="insertHeading(2)">H2</button>
+                    <button title="Heading 3" onclick="insertHeading(3)">H3</button>
+                    <button title="Link" onclick="insertLink()">🔗</button>
+                    <button title="Image" onclick="insertImage()">🖼️</button>
+                    <button title="Blockquote" onclick="insertBlockquote()">💬</button>
+                    <button title="Code" onclick="insertMarkdown('`', '`')">💻</button>
+                    <button title="Code Block" onclick="insertCodeBlock()">📝</button>
+                    <button title="Unordered List" onclick="insertList('- ')">•</button>
+                    <button title="Ordered List" onclick="insertList('1. ')">1.</button>
+                    <button title="Task List" onclick="insertList('- [ ] ')">✓</button>
+                    <button title="Horizontal Rule" onclick="insertText('---\n')">―</button>
+                    <button title="Table" onclick="insertTable()">📊</button>
+                    <button title="Undo" onclick="undoAction()">↩️</button>
+                </div>
+                <textarea id="editor" spellcheck="false"></textarea>
+            </div>
+            <div id="preview-container">
+                <div id="preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pwa-banner">
+        <div>Install this app on your device for easier access</div>
+        <div>
+            <button id="pwa-install">Install</button>
+            <button id="pwa-close">✕</button>
+        </div>
     </div>
 
     <script>
-      const editor = document.getElementById("editor");
-      const preview = document.getElementById("preview");
-      const fileInput = document.getElementById("fileInput");
-      const toggleEditButton = document.getElementById("toggleEditButton");
-      const saveButton = document.getElementById("saveButton");
-      const toolbar = document.getElementById("toolbar");
-      const modal = document.getElementById("modal");
-      const modalTitle = document.getElementById("modalTitle");
-      const modalInput1 = document.getElementById("modalInput1");
-      const modalInput2 = document.getElementById("modalInput2");
-      const modalCancel = document.getElementById("modalCancel");
-      const modalConfirm = document.getElementById("modalConfirm");
+        // Elements
+        const dropzone = document.getElementById('dropzone');
+        const editorContainer = document.getElementById('editor-container');
+        const editor = document.getElementById('editor');
+        const editorSection = document.getElementById('editor-section');
+        const previewContainer = document.getElementById('preview-container');
+        const preview = document.getElementById('preview');
+        const openBtn = document.getElementById('open-btn');
+        const editBtn = document.getElementById('edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const newBtn = document.getElementById('new-btn');
+        const pwaBanner = document.getElementById('pwa-banner');
+        const pwaInstallBtn = document.getElementById('pwa-install');
+        const pwaCloseBtn = document.getElementById('pwa-close');
+        
+        let currentFileName = '';
+        let editMode = false;
+        let fileLoaded = false;
+        let undoStack = [];
+        let deferredPrompt = null;
 
-      let isEditMode = false;
-      let modalCallback = null;
+        // Configure marked.js
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true,
+            tables: true
+        });
 
-      // Turndown 配置
-      const turndownService = new TurndownService({
-        headingStyle: "atx",
-        codeBlockStyle: "fenced",
-        bulletListMarker: "-",
-        emDelimiter: "*",
-      });
+        // Setup manifest for PWA
+        const manifestData = {
+            "name": "Markdown Editor",
+            "short_name": "MD Editor",
+            "description": "A simple markdown editor with preview",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#24292e",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2324292e'/%3E%3Cpath d='M14 3H2v10h12V3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.5 0L8 8h2l3.5 3V8H15v3h-3.5z' fill='white'/%3E%3C/svg%3E",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any"
+                }
+            ]
+        };
 
-      // 添加代码块规则
-      turndownService.addRule("fencedCodeBlock", {
-        filter: function (node, options) {
-          return (
-            node.nodeName === "PRE" &&
-            node.firstChild &&
-            node.firstChild.nodeName === "CODE"
-          );
-        },
-        replacement: function (content, node, options) {
-          const language = node.firstChild.className.replace("language-", "");
-          return (
-            "\n```" + language + "\n" + node.firstChild.textContent + "\n```\n"
-          );
-        },
-      });
+        // Set manifest
+        const stringManifest = JSON.stringify(manifestData);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
 
-      // Marked 配置
-      marked.setOptions({
-        breaks: true,
-        gfm: true,
-        highlight: function (code, lang) {
-          if (Prism.languages[lang]) {
-            return Prism.highlight(code, Prism.languages[lang], lang);
-          }
-          return code;
-        },
-      });
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaBanner.style.display = 'flex';
+        });
 
-      // 更新预览
-      function updatePreview() {
-        const markdownText = editor.value;
-        const htmlContent = marked.parse(markdownText);
-        preview.innerHTML = htmlContent;
-        Prism.highlightAll();
-      }
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
+                deferredPrompt = null;
+                pwaBanner.style.display = 'none';
+            }
+        });
 
-      // 从预览更新编辑器
-      function updateEditor() {
-        const markdown = turndownService.turndown(preview.innerHTML);
-        editor.value = markdown;
-      }
+        pwaCloseBtn.addEventListener('click', () => {
+            pwaBanner.style.display = 'none';
+        });
 
-      // 显示模态框
-      function showModal(title, placeholder1, placeholder2, callback) {
-        modalTitle.textContent = title;
-        modalInput1.placeholder = placeholder1;
-        modalInput2.placeholder = placeholder2;
-        modalInput1.value = "";
-        modalInput2.value = "";
-        modal.style.display = "block";
-        modalCallback = callback;
-        modalInput1.focus();
-      }
-
-      // 关闭模态框
-      function closeModal() {
-        modal.style.display = "none";
-        modalCallback = null;
-      }
-
-      // 格式化文本
-      function formatText(format) {
-        // 优先在 #preview 中操作
-        const activeElement = document.activeElement;
-        if (activeElement === preview) {
-          formatPreview(format);
-        } else if (activeElement === editor) {
-          formatEditor(format);
-        } else {
-          // 默认在 #preview 中操作
-          formatPreview(format);
-        }
-      }
-
-      // 在 #preview 中格式化文本
-      function formatPreview(format) {
-        const selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
-        const range = selection.getRangeAt(0);
-        const selectedText = selection.toString();
-
-        let formattedText = "";
-        switch (format) {
-          case "h1":
-            formattedText = `<h1>${selectedText || "标题 1"}</h1>`;
-            break;
-          case "h2":
-            formattedText = `<h2>${selectedText || "标题 2"}</h2>`;
-            break;
-          case "h3":
-            formattedText = `<h3>${selectedText || "标题 3"}</h3>`;
-            break;
-          case "bold":
-            formattedText = `<strong>${selectedText || "粗体文本"}</strong>`;
-            break;
-          case "italic":
-            formattedText = `<em>${selectedText || "斜体文本"}</em>`;
-            break;
-          case "strikethrough":
-            formattedText = `<del>${selectedText || "删除线文本"}</del>`;
-            break;
-          case "link":
-            showModal("插入链接", "URL", "链接文本", (url, text) => {
-              formattedText = `<a href="${url}">${
-                text || selectedText || url
-              }</a>`;
-              insertFormattedTextPreview(formattedText);
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Create a simple service worker script as a blob
+                const swScript = `
+                    self.addEventListener('install', (event) => {
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(fetch(event.request));
+                    });
+                `;
+                const swBlob = new Blob([swScript], {type: 'text/javascript'});
+                const swURL = URL.createObjectURL(swBlob);
+                
+                navigator.serviceWorker.register(swURL)
+                    .then(reg => console.log('Service worker registered:', reg))
+                    .catch(err => console.log('Service worker registration failed:', err));
             });
-            return;
-          case "image":
-            showModal("插入图片", "图片 URL", "图片描述", (url, alt) => {
-              formattedText = `<img src="${url}" alt="${alt || ""}" />`;
-              insertFormattedTextPreview(formattedText);
+        }
+
+        function renderMarkdown(text) {
+            const html = marked.parse(text);
+            preview.innerHTML = html;
+            
+            // Add checkbox functionality to task lists
+            const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = false;
+                checkbox.addEventListener('change', function() {
+                    const listItem = this.closest('li');
+                    const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
+                    
+                    // Find the corresponding line in the editor
+                    const lines = editor.value.split('\n');
+                    let currentListIndex = -1;
+                    let lineIndex = -1;
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].match(/- \[[ x]\]/i)) {
+                            currentListIndex++;
+                            if (currentListIndex === listItemIndex) {
+                                lineIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (lineIndex !== -1) {
+                        // Save state for undo
+                        saveToUndoStack();
+                        
+                        // Update the checkbox state in the editor
+                        lines[lineIndex] = lines[lineIndex].replace(
+                            /- \[[ x]\]/i, 
+                            `- [${this.checked ? 'x' : ' '}]`
+                        );
+                        
+                        editor.value = lines.join('\n');
+                        renderMarkdown(editor.value);
+                    }
+                });
             });
-            return;
-          case "ul":
-            formattedText = `<ul><li>${selectedText || "列表项"}</li></ul>`;
-            break;
-          case "ol":
-            formattedText = `<ol><li>${selectedText || "列表项"}</li></ol>`;
-            break;
-          case "quote":
-            formattedText = `<blockquote>${
-              selectedText || "引用文本"
-            }</blockquote>`;
-            break;
-          case "code":
-            formattedText = `<code>${selectedText || "code"}</code>`;
-            break;
-          case "codeblock":
-            showModal("插入代码块", "编程语言", "代码", (lang, code) => {
-              formattedText = `<pre><code class="language-${
-                lang || "plaintext"
-              }">${code || selectedText || "// 在此输入代码"}</code></pre>`;
-              insertFormattedTextPreview(formattedText);
+            
+            // Render math
+            renderMathInElement(preview, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
             });
-            return;
-          case "table":
-            formattedText = `
-              <table>
-                <thead>
-                  <tr>
-                    <th>标题 1</th>
-                    <th>标题 2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>内容 1</td>
-                    <td>内容 2</td>
-                  </tr>
-                </tbody>
-              </table>
-            `;
-            break;
-          case "hr":
-            formattedText = "<hr>";
-            break;
-        }
-
-        if (formattedText) {
-          insertFormattedTextPreview(formattedText);
-        }
-      }
-
-      // 在 #editor 中格式化文本
-      function formatEditor(format) {
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        const selectedText = editor.value.substring(start, end);
-        let formattedText = "";
-
-        switch (format) {
-          case "h1":
-            formattedText = `# ${selectedText || "标题 1"}`;
-            break;
-          case "h2":
-            formattedText = `## ${selectedText || "标题 2"}`;
-            break;
-          case "h3":
-            formattedText = `### ${selectedText || "标题3"}`;
-            break;
-          case "bold":
-            formattedText = `**${selectedText || "粗体文本"}**`;
-            break;
-          case "italic":
-            formattedText = `*${selectedText || "斜体文本"}*`;
-            break;
-          case "strikethrough":
-            formattedText = `~~${selectedText || "删除线文本"}~~`;
-            break;
-          case "link":
-            showModal("插入链接", "URL", "链接文本", (url, text) => {
-              formattedText = `[${text || selectedText || url}](${url})`;
-              insertFormattedTextEditor(formattedText);
+            
+            // Apply syntax highlighting to code blocks
+            preview.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
             });
-            return;
-          case "image":
-            showModal("插入图片", "图片 URL", "图片描述", (url, alt) => {
-              formattedText = `![${alt || ""}](${url})`;
-              insertFormattedTextEditor(formattedText);
-            });
-            return;
-          case "ul":
-            formattedText = `- ${selectedText || "列表项"}`;
-            break;
-          case "ol":
-            formattedText = `1. ${selectedText || "列表项"}`;
-            break;
-          case "quote":
-            formattedText = `> ${selectedText || "引用文本"}`;
-            break;
-          case "code":
-            formattedText = `\`${selectedText || "code"}\``;
-            break;
-          case "codeblock":
-            showModal("插入代码块", "编程语言", "代码", (lang, code) => {
-              formattedText = "```" + (lang || "") + "\n" + (code || selectedText || "// 在此输入代码") + "\n```";
-              insertFormattedTextEditor(formattedText);
-            });
-            return;
-          case "table":
-            formattedText = `
-| 标题 1 | 标题 2 |
-| ------ | ------ |
-| 内容 1 | 内容 2 |
-            `;
-            break;
-          case "hr":
-            formattedText = "---";
-            break;
         }
 
-        if (formattedText) {
-          insertFormattedTextEditor(formattedText);
+        function openFile(file) {
+            if (!file) return;
+            
+            if (!file.name.toLowerCase().endsWith('.md')) {
+                alert('Please select a Markdown (.md) file.');
+                return;
+            }
+
+            currentFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                editor.value = content;
+                renderMarkdown(content);
+                fileLoaded = true;
+                setViewMode();
+                editBtn.style.display = 'flex';
+                saveBtn.style.display = 'flex';
+                newBtn.style.display = 'flex';
+                
+                // Clear undo stack
+                undoStack = [];
+                // Add initial state to undo stack
+                saveToUndoStack();
+            };
+            reader.readAsText(file);
         }
-      }
 
-      // 在 #preview 中插入格式化文本
-      function insertFormattedTextPreview(formattedText) {
-        const selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        const fragment = range.createContextualFragment(formattedText);
-        range.insertNode(fragment);
-        selection.removeAllRanges();
-        updateEditor();
-        Prism.highlightAll();
-      }
-
-      // 在 #editor 中插入格式化文本
-      function insertFormattedTextEditor(formattedText) {
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        editor.value =
-          editor.value.substring(0, start) +
-          formattedText +
-          editor.value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + formattedText.length;
-        updatePreview();
-      }
-
-      // 事件监听器
-      editor.addEventListener("input", updatePreview);
-      fileInput.addEventListener("change", handleFileSelect);
-      toggleEditButton.addEventListener("click", toggleEditMode);
-      saveButton.addEventListener("click", saveFile);
-      toolbar.addEventListener("click", handleToolbarClick);
-      modalCancel.addEventListener("click", closeModal);
-      modalConfirm.addEventListener("click", handleModalConfirm);
-      preview.addEventListener("input", updateEditor);
-
-      // 文件选择处理
-      function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            editor.value = e.target.result;
-            updatePreview();
-          };
-          reader.readAsText(file);
+        function setViewMode() {
+            editMode = false;
+            if (fileLoaded) {
+                dropzone.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                editorSection.style.display = 'none';
+                previewContainer.style.display = 'block';
+                previewContainer.style.width = '100%';
+            }
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Edit mode';
         }
-      }
 
-      // 切换编辑模式
-      function toggleEditMode() {
-        isEditMode = !isEditMode;
-        if (isEditMode) {
-          editor.style.display = "block";
-          preview.contentEditable = true;
-          preview.classList.add("editing");
-          toolbar.classList.add("active");
-          toggleEditButton.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            保存并退出
-          `;
-          saveButton.style.display = "none";
-          updateEditor();
-        } else {
-          editor.style.display = "none";
-          preview.contentEditable = false;
-          preview.classList.remove("editing");
-          toolbar.classList.remove("active");
-          toggleEditButton.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-            </svg>
-            编辑
-          `;
-          saveButton.style.display = "inline-block";
-          updatePreview();
+        function setEditMode() {
+            editMode = true;
+            if (fileLoaded) {
+                dropzone.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                editorSection.style.display = 'flex';
+                previewContainer.style.display = 'block';
+                previewContainer.style.width = '50%';
+            }
+            editBtn.textContent = '👁️';
+            editBtn.title = 'View mode';
         }
-      }
 
-      // 保存文件
-      function saveFile() {
-        const markdownText = editor.value;
-        const blob = new Blob([markdownText], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "document.md";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-
-      // 工具栏点击处理
-      function handleToolbarClick(event) {
-        const format = event.target.closest(".toolbar-button")?.dataset.format;
-        if (format) {
-          formatText(format);
+        function saveFile() {
+            const content = editor.value;
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = currentFileName || 'document.md';
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
-      }
 
-      // 模态框确认处理
-      function handleModalConfirm() {
-        if (modalCallback) {
-          modalCallback(modalInput1.value, modalInput2.value);
+        function newFile() {
+            if (editor.value && !confirm('Discard current document?')) {
+                return;
+            }
+            currentFileName = '';
+            editor.value = '';
+            renderMarkdown('');
+            fileLoaded = true;
+            setEditMode();
+            
+            // Clear undo stack
+            undoStack = [];
+            // Add initial state to undo stack
+            saveToUndoStack();
         }
-        closeModal();
-      }
 
-      // 初始化
-      updatePreview();
-	  let isEditorScrolling = false;
-let isPreviewScrolling = false;
+        function saveToUndoStack() {
+            // Limit stack size to prevent memory issues
+            if (undoStack.length >= 50) {
+                undoStack.shift();
+            }
+            undoStack.push(editor.value);
+        }
 
-// 编辑器滚动事件
-editor.addEventListener('scroll', () => {
-  if (!isPreviewScrolling) {
-    isEditorScrolling = true;
-    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-    preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight);
-    setTimeout(() => {
-      isEditorScrolling = false;
-    }, 50);
-  }
-});
+        function undoAction() {
+            if (undoStack.length > 1) {
+                // Remove current state
+                undoStack.pop();
+                // Get previous state
+                const previousState = undoStack[undoStack.length - 1];
+                editor.value = previousState;
+                renderMarkdown(previousState);
+            }
+        }
 
-// 预览区域滚动事件
-preview.addEventListener('scroll', () => {
-  if (!isEditorScrolling) {
-    isPreviewScrolling = true;
-    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
-    editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight);
-    setTimeout(() => {
-      isPreviewScrolling = false;
-    }, 50);
-  }
-});
-// 注册 Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-      })
-      .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
-      });
-  });
-}
+        // Event listeners
+        function openFileDialog() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.md';
+            input.onchange = function(e) {
+                if (e.target.files.length > 0) {
+                    openFile(e.target.files[0]);
+                }
+            };
+            input.click();
+        }
 
+        dropzone.addEventListener('click', openFileDialog);
+        openBtn.addEventListener('click', openFileDialog);
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+            document.body.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        dropzone.addEventListener('dragenter', function() {
+            this.style.backgroundColor = '#e9e9e9';
+        });
+
+        dropzone.addEventListener('dragleave', function() {
+            this.style.backgroundColor = '';
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+            this.style.backgroundColor = '';
+            if (e.dataTransfer.files.length > 0) {
+                openFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        editBtn.addEventListener('click', function() {
+            if (editMode) {
+                setViewMode();
+            } else {
+                setEditMode();
+            }
+        });
+
+        saveBtn.addEventListener('click', saveFile);
+        newBtn.addEventListener('click', newFile);
+        
+        // Synchronize scrolling
+        editor.addEventListener('scroll', function() {
+            if (editMode) {
+                const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+                const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
+                previewContainer.scrollTop = previewScrollPosition;
+            }
+        });
+        
+        previewContainer.addEventListener('scroll', function() {
+            if (editMode) {
+                const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
+                const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
+                editor.scrollTop = editorScrollPosition;
+            }
+        });
+
+        // Save to undo stack when editing
+        editor.addEventListener('input', function() {
+            saveToUndoStack();
+            renderMarkdown(editor.value);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Z or Cmd+Z for undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undoAction();
+            }
+            
+            // Ctrl+S or Cmd+S for save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveFile();
+            }
+            
+            // Ctrl+O or Cmd+O for open
+            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                e.preventDefault();
+                openFileDialog();
+            }
+            
+            // Ctrl+N or Cmd+N for new
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                newFile();
+            }
+            
+            // Ctrl+E or Cmd+E to toggle edit mode
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                if (fileLoaded) {
+                    if (editMode) {
+                        setViewMode();
+                    } else {
+                        setEditMode();
+                    }
+                }
+            }
+        });
+
+        // Markdown editing helper functions
+        function getSelectionOrLineInfo() {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            
+            // If there's a selection, return it
+            if (start !== end) {
+                return {
+                    selection: text.substring(start, end),
+                    start: start,
+                    end: end
+                };
+            }
+            
+            // Otherwise, get the current line
+            let lineStart = start;
+            while (lineStart > 0 && text[lineStart - 1] !== '\n') {
+                lineStart--;
+            }
+            
+            let lineEnd = end;
+            while (lineEnd < text.length && text[lineEnd] !== '\n') {
+                lineEnd++;
+            }
+            
+            return {
+                selection: text.substring(lineStart, lineEnd),
+                start: lineStart,
+                end: lineEnd
+            };
+        }
+
+        function insertText(text) {
+            saveToUndoStack();
+            
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const editorValue = editor.value;
+            
+            editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + text.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertMarkdown(prefix, suffix) {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            const newText = prefix + selection + suffix;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            
+            // Place cursor after the inserted text
+            editor.selectionStart = editor.selectionEnd = start + newText.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertHeading(level) {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            // Remove existing heading markers
+            let cleanText = selection.replace(/^#+\s*/, '');
+            
+            // Add new heading level
+            const prefix = '#'.repeat(level) + ' ';
+            const newText = prefix + cleanText;
+            
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + newText.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertLink() {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            let linkText = selection || 'link text';
+            let newText = `[${linkText}](https://)`;
+            
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + linkText.length + 3;
+            editor.selectionEnd = start + newText.length - 1;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertImage() {
+            saveToUndoStack();
+            
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const selection = editor.value.substring(start, end);
+            
+            let altText = selection || 'alt text';
+            let newText = `![${altText}](image-url)`;
+            
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + altText.length + 4;
+            editor.selectionEnd = start + newText.length - 1;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertBlockquote() {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            // Add blockquote to each line
+            const lines = selection.split('\n');
+            const quotedLines = lines.map(line => `> ${line}`).join('\n');
+            
+            editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertCodeBlock() {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            const newText = '```\n' + selection + '\n```';
+            
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + 4;
+            editor.selectionEnd = start + 4 + selection.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertList(prefix) {
+            saveToUndoStack();
+            
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            
+            // Add list marker to each line
+            const lines = selection.split('\n');
+            const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
+            
+            editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + listedLines.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
+
+        function insertTable() {
+            saveToUndoStack();
+            
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            
+            const table = `| Header 1 | Header 2 | Header 3 |
+| -------- | -------- | -------- |
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |`;
+            
+            editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + table.length;
+            editor.focus();
+            renderMarkdown(editor.value);
+        }
     </script>
-  </body>
+</body>
 </html>
