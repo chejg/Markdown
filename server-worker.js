@@ -1,3 +1,15 @@
+self.addEventListener('install', event => {
+  self.scope = self.registration.scope; // 显式设置作用域
+  console.log('Service Worker installing with scope:', self.scope);
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
 const CACHE_NAME = 'markdown-editor-cache-v1';
 const urlsToCache = [
   './',  // 缓存根目录
