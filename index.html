@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Editor</title>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#24292e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="MD Editor">
+    <link rel="apple-touch-icon" href="images/icon-192x192.png">
+    
     <!-- Libraries -->
     <script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
@@ -11,8 +20,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/contrib/auto-render.min.js"></script>
-    <link rel="manifest" id="manifest-placeholder">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
+        /* 统一使用 Font Awesome 字体图标，如果需要更简洁的可以替换为其他图标库或自定义 SVG */
         :root {
             --sidebar-bg: #24292e;
             --toolbar-bg: #f1f1f1;
@@ -54,7 +67,7 @@
             background: none;
             border: none;
             color: white;
-            font-size: 15px;
+            font-size: 16px; /* 调整图标大小 */
             margin-bottom: 15px;
             cursor: pointer;
             width: 35px;
@@ -348,8 +361,8 @@
         }
 
         #pwa-close {
-            background: none;
-            border: none;
+            background: none !important;
+            border: none !important;
             font-size: 20px;
             cursor: pointer;
             padding: 0 10px;
@@ -372,39 +385,40 @@
             }
         }
     </style>
-    <link rel="manifest" id="manifest-placeholder">
 </head>
 <body>
     <div id="sidebar">
-        <button id="open-btn" title="Open file">📂</button>
-        <button id="edit-btn" title="Edit mode" style="display: none;">✏️</button>
-        <button id="save-btn" title="Save file" style="display: none;">💾</button>
-        <button id="new-btn" title="New file" style="display: none;">📄</button>
+        <button id="open-btn" title="Open file"><i class="fas fa-folder-open"></i></button>
+        <button id="edit-btn" title="Edit mode" style="display: none;"><i class="fas fa-edit"></i></button>
+        <button id="save-btn" title="Save file" style="display: none;"><i class="fas fa-save"></i></button>
+        <button id="new-btn" title="New file" style="display: none;"><i class="fas fa-file"></i></button>
     </div>
     <div id="main-container">
         <div id="dropzone">
-            <div id="dropzone-icon">📄</div>
+            <div id="dropzone-icon"><i class="fas fa-file-alt"></i></div>
             <div>Click or drop a markdown file here to open</div>
         </div>
         <div id="editor-container">
             <div id="editor-section">
                 <div id="toolbar">
-                    <button title="Bold" onclick="insertMarkdown('**', '**')"><b>B</b></button>
-                    <button title="Italic" onclick="insertMarkdown('*', '*')"><i>I</i></button>
+                    <button title="Bold" onclick="insertMarkdown('**', '**')"><i class="fas fa-bold"></i></button>
+                    <button title="Italic" onclick="insertMarkdown('*', '*')"><i class="fas fa-italic"></i></button>
+                    <button title="Strikethrough" onclick="insertMarkdown('~~', '~~')"><i class="fas fa-strikethrough"></i></button>
                     <button title="Heading 1" onclick="insertHeading(1)">H1</button>
                     <button title="Heading 2" onclick="insertHeading(2)">H2</button>
                     <button title="Heading 3" onclick="insertHeading(3)">H3</button>
-                    <button title="Link" onclick="insertLink()">🔗</button>
-                    <button title="Image" onclick="insertImage()">🖼️</button>
-                    <button title="Blockquote" onclick="insertBlockquote()">💬</button>
-                    <button title="Code" onclick="insertMarkdown('`', '`')">💻</button>
-                    <button title="Code Block" onclick="insertCodeBlock()">📝</button>
-                    <button title="Unordered List" onclick="insertList('- ')">•</button>
-                    <button title="Ordered List" onclick="insertList('1. ')">1.</button>
-                    <button title="Task List" onclick="insertList('- [ ] ')">✓</button>
-                    <button title="Horizontal Rule" onclick="insertText('---\n')">―</button>
-                    <button title="Table" onclick="insertTable()">📊</button>
-                    <button title="Undo" onclick="undoAction()">↩️</button>
+                    <button title="Link" onclick="insertLink()"><i class="fas fa-link"></i></button>
+                    <button title="Image" onclick="insertImage()"><i class="fas fa-image"></i></button>
+                    <button title="Blockquote" onclick="insertBlockquote()"><i class="fas fa-quote-left"></i></button>
+                    <button title="Code" onclick="insertMarkdown('`', '`')"><i class="fas fa-code"></i></button>
+                    <button title="Code Block" onclick="insertCodeBlock()"><i class="fas fa-file-code"></i></button>
+                    <button title="Unordered List" onclick="insertList('- ')"><i class="fas fa-list-ul"></i></button>
+                    <button title="Ordered List" onclick="insertList('1. ')"><i class="fas fa-list-ol"></i></button>
+                    <button title="Task List" onclick="insertList('- [ ] ')"><i class="fas fa-check-square"></i></button>
+                    <button title="Horizontal Rule" onclick="insertText('---\n')"><i class="fas fa-minus"></i></button>
+                    <button title="Table" onclick="insertTable()"><i class="fas fa-table"></i></button>
+                    <button title="Undo" onclick="undoAction()"><i class="fas fa-undo"></i></button>
+                    <button title="Fullscreen" onclick="toggleFullscreen()" id="fullscreen-btn"><i class="fas fa-expand"></i></button>
                 </div>
                 <textarea id="editor" spellcheck="false"></textarea>
             </div>
@@ -418,7 +432,7 @@
         <div>Install this app on your device for easier access</div>
         <div>
             <button id="pwa-install">Install</button>
-            <button id="pwa-close">✕</button>
+            <button id="pwa-close"><i class="fas fa-times"></i></button>
         </div>
     </div>
 
@@ -437,11 +451,13 @@
         const pwaBanner = document.getElementById('pwa-banner');
         const pwaInstallBtn = document.getElementById('pwa-install');
         const pwaCloseBtn = document.getElementById('pwa-close');
-        
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+
         let currentFileName = '';
         let editMode = false;
         let fileLoaded = false;
         let undoStack = [];
+        let redoStack = [];
         let deferredPrompt = null;
 
         // Configure marked.js
@@ -454,48 +470,32 @@
             },
             breaks: true,
             gfm: true,
-            tables: true
+            tables: true,
+            smartLists: true,
+            smartypants: true
         });
-
-        // Setup manifest for PWA
-        const manifestData = {
-            "name": "Markdown Editor",
-            "short_name": "MD Editor",
-            "description": "A simple markdown editor with preview",
-            "start_url": "./",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#24292e",
-            "icons": [
-                {
-                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2324292e'/%3E%3Cpath d='M14 3H2v10h12V3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.5 0L8 8h2l3.5 3V8H15v3h-3.5z' fill='white'/%3E%3C/svg%3E",
-                    "sizes": "512x512",
-                    "type": "image/svg+xml",
-                    "purpose": "any"
-                }
-            ]
-        };
-
-        // Set manifest
-        const stringManifest = JSON.stringify(manifestData);
-        const blob = new Blob([stringManifest], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
 
         // PWA Installation
         window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
+            // Stash the event so it can be triggered later
             deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
             pwaBanner.style.display = 'flex';
         });
 
         pwaInstallBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
+                // Hide the app provided install promotion
+                pwaBanner.style.display = 'none';
+                // Show the install prompt
                 deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
                 const { outcome } = await deferredPrompt.userChoice;
                 console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
+                // We no longer need the prompt. Clear it up.
                 deferredPrompt = null;
-                pwaBanner.style.display = 'none';
             }
         });
 
@@ -506,20 +506,7 @@
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Create a simple service worker script as a blob
-                const swScript = `
-                    self.addEventListener('install', (event) => {
-                        self.skipWaiting();
-                    });
-                    
-                    self.addEventListener('fetch', (event) => {
-                        event.respondWith(fetch(event.request));
-                    });
-                `;
-                const swBlob = new Blob([swScript], {type: 'text/javascript'});
-                const swURL = URL.createObjectURL(swBlob);
-                
-                navigator.serviceWorker.register(swURL)
+                navigator.serviceWorker.register('service-worker.js')
                     .then(reg => console.log('Service worker registered:', reg))
                     .catch(err => console.log('Service worker registration failed:', err));
             });
@@ -528,7 +515,7 @@
         function renderMarkdown(text) {
             const html = marked.parse(text);
             preview.innerHTML = html;
-            
+
             // Add checkbox functionality to task lists
             const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
@@ -536,12 +523,12 @@
                 checkbox.addEventListener('change', function() {
                     const listItem = this.closest('li');
                     const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
-                    
+
                     // Find the corresponding line in the editor
                     const lines = editor.value.split('\n');
                     let currentListIndex = -1;
                     let lineIndex = -1;
-                    
+
                     for (let i = 0; i < lines.length; i++) {
                         if (lines[i].match(/- \[[ x]\]/i)) {
                             currentListIndex++;
@@ -551,23 +538,23 @@
                             }
                         }
                     }
-                    
+
                     if (lineIndex !== -1) {
                         // Save state for undo
                         saveToUndoStack();
-                        
+
                         // Update the checkbox state in the editor
                         lines[lineIndex] = lines[lineIndex].replace(
-                            /- \[[ x]\]/i, 
+                            /- \[[ x]\]/i,
                             `- [${this.checked ? 'x' : ' '}]`
                         );
-                        
+
                         editor.value = lines.join('\n');
                         renderMarkdown(editor.value);
                     }
                 });
             });
-            
+
             // Render math
             renderMathInElement(preview, {
                 delimiters: [
@@ -578,7 +565,7 @@
                 ],
                 throwOnError: false
             });
-            
+
             // Apply syntax highlighting to code blocks
             preview.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightElement(block);
@@ -587,7 +574,7 @@
 
         function openFile(file) {
             if (!file) return;
-            
+
             if (!file.name.toLowerCase().endsWith('.md')) {
                 alert('Please select a Markdown (.md) file.');
                 return;
@@ -604,9 +591,10 @@
                 editBtn.style.display = 'flex';
                 saveBtn.style.display = 'flex';
                 newBtn.style.display = 'flex';
-                
+
                 // Clear undo stack
                 undoStack = [];
+                redoStack = [];
                 // Add initial state to undo stack
                 saveToUndoStack();
             };
@@ -622,7 +610,7 @@
                 previewContainer.style.display = 'block';
                 previewContainer.style.width = '100%';
             }
-            editBtn.textContent = '✏️';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
             editBtn.title = 'Edit mode';
         }
 
@@ -635,7 +623,7 @@
                 previewContainer.style.display = 'block';
                 previewContainer.style.width = '50%';
             }
-            editBtn.textContent = '👁️';
+            editBtn.innerHTML = '<i class="fas fa-eye"></i>';
             editBtn.title = 'View mode';
         }
 
@@ -658,9 +646,10 @@
             renderMarkdown('');
             fileLoaded = true;
             setEditMode();
-            
+
             // Clear undo stack
             undoStack = [];
+            redoStack = [];
             // Add initial state to undo stack
             saveToUndoStack();
         }
@@ -671,16 +660,55 @@
                 undoStack.shift();
             }
             undoStack.push(editor.value);
+            redoStack = []; // Clear redo stack when a new action is performed
         }
 
         function undoAction() {
             if (undoStack.length > 1) {
-                // Remove current state
-                undoStack.pop();
+                // Move current state to redo stack
+                redoStack.push(undoStack.pop());
                 // Get previous state
                 const previousState = undoStack[undoStack.length - 1];
                 editor.value = previousState;
                 renderMarkdown(previousState);
+            }
+        }
+
+        function redoAction() {
+            if (redoStack.length > 0) {
+                // Get the state from redo stack
+                const nextState = redoStack.pop();
+                // Add it back to undo stack
+                undoStack.push(nextState);
+                // Apply the state
+                editor.value = nextState;
+                renderMarkdown(nextState);
+            }
+        }
+
+        function toggleFullscreen() {
+            const doc = document.documentElement;
+            
+            if (!document.fullscreenElement) {
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen();
+                } else if (doc.webkitRequestFullscreen) { /* Safari */
+                    doc.webkitRequestFullscreen();
+                } else if (doc.msRequestFullscreen) { /* IE11 */
+                    doc.msRequestFullscreen();
+                }
+                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                fullscreenBtn.title = "Exit Fullscreen";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                }
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+                fullscreenBtn.title = "Fullscreen";
             }
         }
 
@@ -736,7 +764,7 @@
 
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
-        
+
         // Synchronize scrolling
         editor.addEventListener('scroll', function() {
             if (editMode) {
@@ -745,7 +773,7 @@
                 previewContainer.scrollTop = previewScrollPosition;
             }
         });
-        
+
         previewContainer.addEventListener('scroll', function() {
             if (editMode) {
                 const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
@@ -763,29 +791,41 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Ctrl+Z or Cmd+Z for undo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault();
                 undoAction();
             }
             
+            // Ctrl+Shift+Z or Cmd+Shift+Z for redo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+                e.preventDefault();
+                redoAction();
+            }
+            
+            // Ctrl+Y or Cmd+Y for redo (alternative)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redoAction();
+            }
+
             // Ctrl+S or Cmd+S for save
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
                 saveFile();
             }
-            
+
             // Ctrl+O or Cmd+O for open
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
                 openFileDialog();
             }
-            
+
             // Ctrl+N or Cmd+N for new
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
                 newFile();
             }
-            
+
             // Ctrl+E or Cmd+E to toggle edit mode
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
@@ -797,6 +837,12 @@
                     }
                 }
             }
+            
+            // F11 for fullscreen
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
         });
 
         // Markdown editing helper functions
@@ -804,7 +850,7 @@
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const text = editor.value;
-            
+
             // If there's a selection, return it
             if (start !== end) {
                 return {
@@ -813,18 +859,18 @@
                     end: end
                 };
             }
-            
+
             // Otherwise, get the current line
             let lineStart = start;
             while (lineStart > 0 && text[lineStart - 1] !== '\n') {
                 lineStart--;
             }
-            
+
             let lineEnd = end;
             while (lineEnd < text.length && text[lineEnd] !== '\n') {
                 lineEnd++;
             }
-            
+
             return {
                 selection: text.substring(lineStart, lineEnd),
                 start: lineStart,
@@ -834,11 +880,11 @@
 
         function insertText(text) {
             saveToUndoStack();
-            
+
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const editorValue = editor.value;
-            
+
             editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
             editor.selectionStart = editor.selectionEnd = start + text.length;
             editor.focus();
@@ -847,15 +893,15 @@
 
         function insertMarkdown(prefix, suffix) {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             const newText = prefix + selection + suffix;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            
+
             // Place cursor after the inserted text
             editor.selectionStart = editor.selectionEnd = start + newText.length;
             editor.focus();
@@ -864,19 +910,19 @@
 
         function insertHeading(level) {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             // Remove existing heading markers
             let cleanText = selection.replace(/^#+\s*/, '');
-            
+
             // Add new heading level
             const prefix = '#'.repeat(level) + ' ';
             const newText = prefix + cleanText;
-            
+
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start + newText.length;
             editor.focus();
@@ -885,15 +931,15 @@
 
         function insertLink() {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             let linkText = selection || 'link text';
             let newText = `[${linkText}](https://)`;
-            
+
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
             editor.selectionStart = start + linkText.length + 3;
             editor.selectionEnd = start + newText.length - 1;
@@ -903,14 +949,14 @@
 
         function insertImage() {
             saveToUndoStack();
-            
+
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const selection = editor.value.substring(start, end);
-            
+
             let altText = selection || 'alt text';
             let newText = `![${altText}](image-url)`;
-            
+
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
             editor.selectionStart = start + altText.length + 4;
             editor.selectionEnd = start + newText.length - 1;
@@ -920,16 +966,16 @@
 
         function insertBlockquote() {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             // Add blockquote to each line
             const lines = selection.split('\n');
             const quotedLines = lines.map(line => `> ${line}`).join('\n');
-            
+
             editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
             editor.focus();
@@ -938,14 +984,14 @@
 
         function insertCodeBlock() {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             const newText = '```\n' + selection + '\n```';
-            
+
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
             editor.selectionStart = start + 4;
             editor.selectionEnd = start + 4 + selection.length;
@@ -955,16 +1001,16 @@
 
         function insertList(prefix) {
             saveToUndoStack();
-            
+
             const info = getSelectionOrLineInfo();
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            
+
             // Add list marker to each line
             const lines = selection.split('\n');
             const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
-            
+
             editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start + listedLines.length;
             editor.focus();
@@ -973,15 +1019,15 @@
 
         function insertTable() {
             saveToUndoStack();
-            
+
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
-            
+
             const table = `| Header 1 | Header 2 | Header 3 |
 | -------- | -------- | -------- |
 | Cell 1   | Cell 2   | Cell 3   |
 | Cell 4   | Cell 5   | Cell 6   |`;
-            
+
             editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start + table.length;
             editor.focus();
