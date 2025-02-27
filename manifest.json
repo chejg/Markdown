@@ -1,20 +1,20 @@
 {
   "name": "Markdown Editor",
   "short_name": "MD Editor",
-  "description": "A simple and elegant Markdown editor",
-  "start_url": "/",
+  "description": "A simple offline Markdown editor.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4a90e2",
+  "theme_color": "#24292e",
   "icons": [
     {
-      "src": "icons/64.png",
-      "sizes": "64x64",
+      "src": "images/icon-256.png",
+      "sizes": "256x256",
       "type": "image/png"
     },
     {
-      "src": "icons/128.png",
-      "sizes": "128x128",
+      "src": "images/512.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
