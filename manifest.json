@@ -1,11 +1,12 @@
 {
-  "name": "Markdown Editor",
+  "name": "Markdown Editor PWA",
   "short_name": "MD Editor",
-  "description": "A simple offline Markdown editor.",
-  "start_url": "./index.html",
+  "id": "markdown-editor-pwa-v1", // 添加唯一ID
+  "description": "A simple offline Markdown editor with GitHub-style preview.",
+  "start_url": "./index.html?source=pwa",  // 添加查询参数以区分
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#24292e",
+  "theme_color": "#e3e3e3",
   "icons": [
     {
       "src": "icons/256.png",
