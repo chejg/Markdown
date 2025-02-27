@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MD Editor">
-    <link rel="apple-touch-icon" href="icons/256.png">
+    <link rel="apple-touch-icon" href="images/icon-192x192.png">
     
     <!-- Libraries -->
     <script src="https://unpkg.com/marked@4.3.0/marked.min.js"></script>
@@ -1033,6 +1033,43 @@
             editor.focus();
             renderMarkdown(editor.value);
         }
+		
+	// 添加版本号和时间戳以确保更新
+const SW_VERSION = '1.0.0';
+const SW_TIMESTAMP = new Date().getTime();
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // 添加时间戳以确保获取最新版本
+    const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
+    
+    // 先注销所有现有的 service worker
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for(let registration of registrations) {
+        registration.unregister();
+        console.log('Service worker unregistered');
+      }
+      
+      // 然后注册新的 service worker
+      navigator.serviceWorker.register(swUrl, {
+        scope: './'
+      })
+      .then(reg => {
+        console.log('New service worker registered with scope:', reg.scope);
+        
+        // 强制更新
+        reg.update();
+        
+        // 如果有新版本，立即激活
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      })
+      .catch(err => console.log('Service worker registration failed:', err));
+    });
+  });
+}
     </script>
 </body>
 </html>
