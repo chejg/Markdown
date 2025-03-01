@@ -20,12 +20,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/katex.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.4/contrib/auto-render.min.js"></script>
+    <script src="https://unpkg.com/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js"></script>
+    <script src="https://unpkg.com/mermaid@9.1.7/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/emoji-toolkit@6.6.0/lib/js/joypixels.min.js"></script>
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* 统一使用 Font Awesome 字体图标，如果需要更简洁的可以替换为其他图标库或自定义 SVG */
+        /* Styles remain unchanged from the original */
         :root {
             --sidebar-bg: #24292e;
             --toolbar-bg: #f1f1f1;
@@ -40,349 +43,54 @@
             --button-hover: #e1e4e8;
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            background-color: #f5f5f5;
-            color: var(--text-color);
-        }
-
-        #sidebar {
-            width: 40px;
-            background-color: var(--sidebar-bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 20px;
-        }
-
-        #sidebar button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px; /* 调整图标大小 */
-            margin-bottom: 15px;
-            cursor: pointer;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-
-        #sidebar button:hover {
-            background-color: #444;
-        }
-
-        #main-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        #dropzone {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #666;
-            font-size: 18px;
-            cursor: pointer;
-            text-align: center;
-            padding: 20px;
-            transition: background-color 0.2s;
-        }
-
-        #dropzone:hover {
-            background-color: #e9e9e9;
-        }
-
-        #dropzone-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: #999;
-        }
-
-        #editor-container {
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: row;
-        }
-
-        #editor-section {
-            width: 50%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-        }
-
-        #toolbar {
-            background-color: var(--toolbar-bg);
-            padding: 5px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        #toolbar button {
-            background-color: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            color: #333;
-            cursor: pointer;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            padding: 3px 5px;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-
-        #toolbar button:hover {
-            background-color: var(--button-hover);
-        }
-
-        #editor {
-            flex: 1;
-            overflow: auto;
-            padding: 15px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            border: none;
-            resize: none;
-            background-color: var(--editor-bg);
-            tab-size: 4;
-        }
-
-        #preview-container {
-            width: 50%;
-            height: 100%;
-            overflow: auto;
-            padding: 0;
-            background-color: white;
-        }
-
-        #preview {
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--text-color);
-            word-wrap: break-word;
-        }
-
-        /* GitHub-style Markdown */
-        #preview h1, #preview h2 {
-            border-bottom: 1px solid #eaecef;
-            padding-bottom: 0.3em;
-            margin-top: 24px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        #preview h1 {
-            font-size: 2em;
-        }
-
-        #preview h2 {
-            font-size: 1.5em;
-        }
-
-        #preview h3 {
-            font-size: 1.25em;
-            margin-top: 24px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        #preview h4 {
-            font-size: 1em;
-            margin-top: 24px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        #preview h5 {
-            font-size: 0.875em;
-            margin-top: 24px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        #preview h6 {
-            font-size: 0.85em;
-            color: #6a737d;
-            margin-top: 24px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        #preview blockquote {
-            padding: 0 1em;
-            color: var(--blockquote-color);
-            border-left: 0.25em solid #dfe2e5;
-            margin: 0 0 16px 0;
-        }
-
-        #preview pre {
-            padding: 16px;
-            overflow: auto;
-            font-size: 85%;
-            line-height: 1.45;
-            background-color: var(--editor-bg);
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-
-        #preview code {
-            padding: 0.2em 0.4em;
-            margin: 0;
-            font-size: 85%;
-            background-color: var(--code-bg);
-            border-radius: 3px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        }
-
-        #preview pre code {
-            padding: 0;
-            background-color: transparent;
-            border-radius: 0;
-        }
-
-        #preview table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-bottom: 16px;
-            display: block;
-            overflow-x: auto;
-        }
-
-        #preview table th, #preview table td {
-            padding: 6px 13px;
-            border: 1px solid var(--table-border);
-        }
-
-        #preview table tr {
-            background-color: #fff;
-            border-top: 1px solid #c6cbd1;
-        }
-
-        #preview table tr:nth-child(2n) {
-            background-color: var(--table-alt-bg);
-        }
-
-        #preview img {
-            max-width: 100%;
-            box-sizing: content-box;
-            background-color: #fff;
-        }
-
-        #preview p {
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
-
-        #preview a {
-            color: var(--link-color);
-            text-decoration: none;
-        }
-
-        #preview a:hover {
-            text-decoration: underline;
-        }
-
-        #preview ul, #preview ol {
-            padding-left: 2em;
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
-
-        #preview li+li {
-            margin-top: 0.25em;
-        }
-
-        #preview hr {
-            height: 0.25em;
-            padding: 0;
-            margin: 24px 0;
-            background-color: #e1e4e8;
-            border: 0;
-        }
-
-        #preview .task-list-item {
-            list-style-type: none;
-        }
-
-        #preview .task-list-item-checkbox {
-            margin: 0 0.2em 0.25em -1.6em;
-            vertical-align: middle;
-        }
-
-        /* PWA Installation Banner */
-        #pwa-banner {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            padding: 10px 20px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 1000;
-        }
-
-        #pwa-banner button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #pwa-close {
-            background: none !important;
-            border: none !important;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0 10px;
-        }
-
-        /* Responsive design */
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; background-color: #f5f5f5; color: var(--text-color); }
+        #sidebar { width: 40px; background-color: var(--sidebar-bg); display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        #sidebar button { background: none; border: none; color: white; font-size: 16px; margin-bottom: 15px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 5px; transition: background-color 0.2s; }
+        #sidebar button:hover { background-color: #444; }
+        #main-container { flex: 1; display: flex; overflow: hidden; }
+        #dropzone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #666; font-size: 18px; cursor: pointer; text-align: center; padding: 20px; transition: background-color 0.2s; }
+        #dropzone:hover { background-color: #e9e9e9; }
+        #dropzone-icon { font-size: 48px; margin-bottom: 20px; color: #999; }
+        #editor-container { width: 100%; height: 100%; display: none; flex-direction: row; }
+        #editor-section { width: 50%; height: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        #toolbar { background-color: var(--toolbar-bg); padding: 5px; border-bottom: 1px solid var(--border-color); display: flex; flex-wrap: wrap; }
+        #toolbar button { background-color: #fff; border: 1px solid var(--border-color); border-radius: 3px; color: #333; cursor: pointer; margin-right: 5px; margin-bottom: 5px; padding: 3px 5px; font-size: 14px; transition: background-color 0.2s; }
+        #toolbar button:hover { background-color: var(--button-hover); }
+        #editor { flex: 1; overflow: auto; padding: 15px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 14px; line-height: 1.5; border: none; resize: none; background-color: var(--editor-bg); tab-size: 4; }
+        #preview-container { width: 50%; height: 100%; overflow: auto; padding: 0; background-color: white; }
+        #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; }
+        #preview h1, #preview h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        #preview h1 { font-size: 2em; }
+        #preview h2 { font-size: 1.5em; }
+        #preview h3 { font-size: 1.25em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        #preview h4 { font-size: 1em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        #preview h5 { font-size: 0.875em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        #preview h6 { font-size: 0.85em; color: #6a737d; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+        #preview blockquote { padding: 0 1em; color: var(--blockquote-color); border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
+        #preview pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: var(--editor-bg); border-radius: 6px; margin-bottom: 16px; }
+        #preview code { padding: 0.2em 0.4em; margin: 0; font-size: 85%; background-color: var(--code-bg); border-radius: 3px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+        #preview pre code { padding: 0; background-color: transparent; border-radius: 0; }
+        #preview table { border-collapse: collapse; width: 100%; margin-bottom: 16px; display: block; overflow-x: auto; }
+        #preview table th, #preview table td { padding: 6px 13px; border: 1px solid var(--table-border); }
+        #preview table tr { background-color: #fff; border-top: 1px solid #c6cbd1; }
+        #preview table tr:nth-child(2n) { background-color: var(--table-alt-bg); }
+        #preview img { max-width: 100%; box-sizing: content-box; background-color: #fff; }
+        #preview p { margin-top: 0; margin-bottom: 16px; }
+        #preview a { color: var(--link-color); text-decoration: none; }
+        #preview a:hover { text-decoration: underline; }
+        #preview ul, #preview ol { padding-left: 2em; margin-top: 0; margin-bottom: 16px; }
+        #preview li+li { margin-top: 0.25em; }
+        #preview hr { height: 0.25em; padding: 0; margin: 24px 0; background-color: #e1e4e8; border: 0; }
+        #preview .task-list-item { list-style-type: none; }
+        #preview .task-list-item-checkbox { margin: 0 0.2em 0.25em -1.6em; vertical-align: middle; }
+        #pwa-banner { position: fixed; bottom: 0; left: 0; right: 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; padding: 10px 20px; display: none; align-items: center; justify-content: space-between; z-index: 1000; }
+        #pwa-banner button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        #pwa-close { background: none !important; border: none !important; font-size: 20px; cursor: pointer; padding: 0 10px; }
         @media (max-width: 768px) {
-            #editor-container {
-                flex-direction: column;
-            }
-
-            #editor-section, #preview-container {
-                width: 100%;
-                height: 50%;
-            }
-
-            #editor-section {
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
+            #editor-container { flex-direction: column; }
+            #editor-section, #preview-container { width: 100%; height: 50%; }
+            #editor-section { border-right: none; border-bottom: 1px solid var(--border-color); }
         }
     </style>
 </head>
@@ -460,616 +168,464 @@
         let redoStack = [];
         let deferredPrompt = null;
 
+        // Custom marked.js renderer
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, language) {
+          if (language === 'plantuml') {
+            const encoded = plantumlEncoder.encode(code);
+            const url = `http://www.plantuml.com/plantuml/svg/${encoded}`;
+            return `<img src="${url}" alt="PlantUML Diagram">`;
+          } else if (language === 'mermaid') {
+            return `<div class="mermaid">${code}</div>`;
+          } else {
+            const highlighted = hljs.highlight(code, { language: language || 'plaintext' }).value;
+            return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
+          }
+        };
+
         // Configure marked.js
         marked.setOptions({
-            highlight: function(code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                return hljs.highlightAuto(code).value;
-            },
-            breaks: true,
-            gfm: true,
-            tables: true,
-            smartLists: true,
-            smartypants: true
+          renderer: renderer,
+          highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, { language: lang }).value;
+            }
+            return hljs.highlightAuto(code).value;
+          },
+          breaks: true,
+          gfm: true,
+          tables: true,
+          smartLists: true,
+          smartypants: true
         });
 
         // PWA Installation
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later
-            deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
-            pwaBanner.style.display = 'flex';
+          e.preventDefault();
+          deferredPrompt = e;
+          pwaBanner.style.display = 'flex';
         });
 
         pwaInstallBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Hide the app provided install promotion
-                pwaBanner.style.display = 'none';
-                // Show the install prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
-                // We no longer need the prompt. Clear it up.
-                deferredPrompt = null;
-            }
+          if (deferredPrompt) {
+            pwaBanner.style.display = 'none';
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
+            deferredPrompt = null;
+          }
         });
 
         pwaCloseBtn.addEventListener('click', () => {
-            pwaBanner.style.display = 'none';
+          pwaBanner.style.display = 'none';
         });
 
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('Service worker registered:', reg))
-                    .catch(err => console.log('Service worker registration failed:', err));
+          window.addEventListener('load', () => {
+            const SW_VERSION = '1.0.0';
+            const SW_TIMESTAMP = new Date().getTime();
+            const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
+            
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              for (let registration of registrations) {
+                registration.unregister();
+                console.log('Service worker unregistered');
+              }
+              navigator.serviceWorker.register(swUrl, { scope: './' })
+                .then(reg => {
+                  console.log('New service worker registered with scope:', reg.scope);
+                  reg.update();
+                  if (reg.waiting) {
+                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                })
+                .catch(err => console.log('Service worker registration failed:', err));
             });
+          });
         }
 
         function renderMarkdown(text) {
-            const html = marked.parse(text);
-            preview.innerHTML = html;
+          const html = marked.parse(text);
+          preview.innerHTML = joypixels.shortnameToImage(html);
 
-            // Add checkbox functionality to task lists
-            const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.disabled = false;
-                checkbox.addEventListener('change', function() {
-                    const listItem = this.closest('li');
-                    const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
+          // Initialize Mermaid
+          mermaid.init(undefined, preview.querySelectorAll('.mermaid'));
 
-                    // Find the corresponding line in the editor
-                    const lines = editor.value.split('\n');
-                    let currentListIndex = -1;
-                    let lineIndex = -1;
+          // Render math
+          renderMathInElement(preview, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+              { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+          });
 
-                    for (let i = 0; i < lines.length; i++) {
-                        if (lines[i].match(/- \[[ x]\]/i)) {
-                            currentListIndex++;
-                            if (currentListIndex === listItemIndex) {
-                                lineIndex = i;
-                                break;
-                            }
-                        }
-                    }
+          // Apply syntax highlighting
+          preview.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
 
-                    if (lineIndex !== -1) {
-                        // Save state for undo
-                        saveToUndoStack();
+          // Add checkbox functionality to task lists
+          const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+            checkbox.addEventListener('change', function() {
+              const listItem = this.closest('li');
+              const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
+              const lines = editor.value.split('\n');
+              let currentListIndex = -1;
+              let lineIndex = -1;
 
-                        // Update the checkbox state in the editor
-                        lines[lineIndex] = lines[lineIndex].replace(
-                            /- \[[ x]\]/i,
-                            `- [${this.checked ? 'x' : ' '}]`
-                        );
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].match(/- \[[ x]\]/i)) {
+                  currentListIndex++;
+                  if (currentListIndex === listItemIndex) {
+                    lineIndex = i;
+                    break;
+                  }
+                }
+              }
 
-                        editor.value = lines.join('\n');
-                        renderMarkdown(editor.value);
-                    }
-                });
+              if (lineIndex !== -1) {
+                saveToUndoStack();
+                lines[lineIndex] = lines[lineIndex].replace(
+                  /- \[[ x]\]/i,
+                  `- [${this.checked ? 'x' : ' '}]`
+                );
+                editor.value = lines.join('\n');
+                renderMarkdown(editor.value);
+              }
             });
-
-            // Render math
-            renderMathInElement(preview, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError: false
-            });
-
-            // Apply syntax highlighting to code blocks
-            preview.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
+          });
         }
 
         function openFile(file) {
-            if (!file) return;
+          if (!file) return;
+          if (!file.name.toLowerCase().endsWith('.md')) {
+            alert('Please select a Markdown (.md) file.');
+            return;
+          }
 
-            if (!file.name.toLowerCase().endsWith('.md')) {
-                alert('Please select a Markdown (.md) file.');
-                return;
-            }
-
-            currentFileName = file.name;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                editor.value = content;
-                renderMarkdown(content);
-                fileLoaded = true;
-                setViewMode();
-                editBtn.style.display = 'flex';
-                saveBtn.style.display = 'flex';
-                newBtn.style.display = 'flex';
-
-                // Clear undo stack
-                undoStack = [];
-                redoStack = [];
-                // Add initial state to undo stack
-                saveToUndoStack();
-            };
-            reader.readAsText(file);
+          currentFileName = file.name;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const content = e.target.result;
+            editor.value = content;
+            renderMarkdown(content);
+            fileLoaded = true;
+            setViewMode();
+            editBtn.style.display = 'flex';
+            saveBtn.style.display = 'flex';
+            newBtn.style.display = 'flex';
+            undoStack = [];
+            redoStack = [];
+            saveToUndoStack();
+          };
+          reader.readAsText(file);
         }
 
         function setViewMode() {
-            editMode = false;
-            if (fileLoaded) {
-                dropzone.style.display = 'none';
-                editorContainer.style.display = 'flex';
-                editorSection.style.display = 'none';
-                previewContainer.style.display = 'block';
-                previewContainer.style.width = '100%';
-            }
-            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-            editBtn.title = 'Edit mode';
+          editMode = false;
+          if (fileLoaded) {
+            dropzone.style.display = 'none';
+            editorContainer.style.display = 'flex';
+            editorSection.style.display = 'none';
+            previewContainer.style.display = 'block';
+            previewContainer.style.width = '100%';
+          }
+          editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+          editBtn.title = 'Edit mode';
         }
 
         function setEditMode() {
-            editMode = true;
-            if (fileLoaded) {
-                dropzone.style.display = 'none';
-                editorContainer.style.display = 'flex';
-                editorSection.style.display = 'flex';
-                previewContainer.style.display = 'block';
-                previewContainer.style.width = '50%';
-            }
-            editBtn.innerHTML = '<i class="fas fa-eye"></i>';
-            editBtn.title = 'View mode';
+          editMode = true;
+          if (fileLoaded) {
+            dropzone.style.display = 'none';
+            editorContainer.style.display = 'flex';
+            editorSection.style.display = 'flex';
+            previewContainer.style.display = 'block';
+            previewContainer.style.width = '50%';
+          }
+          editBtn.innerHTML = '<i class="fas fa-eye"></i>';
+          editBtn.title = 'View mode';
         }
 
         function saveFile() {
-            const content = editor.value;
-            const blob = new Blob([content], { type: 'text/markdown' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = currentFileName || 'document.md';
-            a.click();
-            URL.revokeObjectURL(a.href);
+          const content = editor.value;
+          const blob = new Blob([content], { type: 'text/markdown' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = currentFileName || 'document.md';
+          a.click();
+          URL.revokeObjectURL(a.href);
         }
 
         function newFile() {
-            if (editor.value && !confirm('Discard current document?')) {
-                return;
-            }
-            currentFileName = '';
-            editor.value = '';
-            renderMarkdown('');
-            fileLoaded = true;
-            setEditMode();
-
-            // Clear undo stack
-            undoStack = [];
-            redoStack = [];
-            // Add initial state to undo stack
-            saveToUndoStack();
+          if (editor.value && !confirm('Discard current document?')) return;
+          currentFileName = '';
+          editor.value = '';
+          renderMarkdown('');
+          fileLoaded = true;
+          setEditMode();
+          undoStack = [];
+          redoStack = [];
+          saveToUndoStack();
         }
 
         function saveToUndoStack() {
-            // Limit stack size to prevent memory issues
-            if (undoStack.length >= 50) {
-                undoStack.shift();
-            }
-            undoStack.push(editor.value);
-            redoStack = []; // Clear redo stack when a new action is performed
+          if (undoStack.length >= 50) undoStack.shift();
+          undoStack.push(editor.value);
+          redoStack = [];
         }
 
         function undoAction() {
-            if (undoStack.length > 1) {
-                // Move current state to redo stack
-                redoStack.push(undoStack.pop());
-                // Get previous state
-                const previousState = undoStack[undoStack.length - 1];
-                editor.value = previousState;
-                renderMarkdown(previousState);
-            }
+          if (undoStack.length > 1) {
+            redoStack.push(undoStack.pop());
+            const previousState = undoStack[undoStack.length - 1];
+            editor.value = previousState;
+            renderMarkdown(previousState);
+          }
         }
 
         function redoAction() {
-            if (redoStack.length > 0) {
-                // Get the state from redo stack
-                const nextState = redoStack.pop();
-                // Add it back to undo stack
-                undoStack.push(nextState);
-                // Apply the state
-                editor.value = nextState;
-                renderMarkdown(nextState);
-            }
+          if (redoStack.length > 0) {
+            const nextState = redoStack.pop();
+            undoStack.push(nextState);
+            editor.value = nextState;
+            renderMarkdown(nextState);
+          }
         }
 
         function toggleFullscreen() {
-            const doc = document.documentElement;
-            
-            if (!document.fullscreenElement) {
-                if (doc.requestFullscreen) {
-                    doc.requestFullscreen();
-                } else if (doc.webkitRequestFullscreen) { /* Safari */
-                    doc.webkitRequestFullscreen();
-                } else if (doc.msRequestFullscreen) { /* IE11 */
-                    doc.msRequestFullscreen();
-                }
-                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-                fullscreenBtn.title = "Exit Fullscreen";
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { /* IE11 */
-                    document.msExitFullscreen();
-                }
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-                fullscreenBtn.title = "Fullscreen";
-            }
+          const doc = document.documentElement;
+          if (!document.fullscreenElement) {
+            if (doc.requestFullscreen) doc.requestFullscreen();
+            else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+            else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            fullscreenBtn.title = "Exit Fullscreen";
+          } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            fullscreenBtn.title = "Fullscreen";
+          }
         }
 
         // Event listeners
         function openFileDialog() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.md';
-            input.onchange = function(e) {
-                if (e.target.files.length > 0) {
-                    openFile(e.target.files[0]);
-                }
-            };
-            input.click();
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.md';
+          input.onchange = function(e) {
+            if (e.target.files.length > 0) openFile(e.target.files[0]);
+          };
+          input.click();
         }
 
         dropzone.addEventListener('click', openFileDialog);
         openBtn.addEventListener('click', openFileDialog);
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-            document.body.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
+          dropzone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }, false);
+          document.body.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }, false);
         });
 
-        dropzone.addEventListener('dragenter', function() {
-            this.style.backgroundColor = '#e9e9e9';
-        });
-
-        dropzone.addEventListener('dragleave', function() {
-            this.style.backgroundColor = '';
-        });
-
+        dropzone.addEventListener('dragenter', function() { this.style.backgroundColor = '#e9e9e9'; });
+        dropzone.addEventListener('dragleave', function() { this.style.backgroundColor = ''; });
         dropzone.addEventListener('drop', function(e) {
-            this.style.backgroundColor = '';
-            if (e.dataTransfer.files.length > 0) {
-                openFile(e.dataTransfer.files[0]);
-            }
+          this.style.backgroundColor = '';
+          if (e.dataTransfer.files.length > 0) openFile(e.dataTransfer.files[0]);
         });
 
         editBtn.addEventListener('click', function() {
-            if (editMode) {
-                setViewMode();
-            } else {
-                setEditMode();
-            }
+          if (editMode) setViewMode();
+          else setEditMode();
         });
 
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
 
-        // Synchronize scrolling
         editor.addEventListener('scroll', function() {
-            if (editMode) {
-                const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-                const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
-                previewContainer.scrollTop = previewScrollPosition;
-            }
+          if (editMode) {
+            const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+            const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
+            previewContainer.scrollTop = previewScrollPosition;
+          }
         });
 
         previewContainer.addEventListener('scroll', function() {
-            if (editMode) {
-                const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
-                const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
-                editor.scrollTop = editorScrollPosition;
-            }
+          if (editMode) {
+            const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
+            const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
+            editor.scrollTop = editorScrollPosition;
+          }
         });
 
-        // Save to undo stack when editing
         editor.addEventListener('input', function() {
-            saveToUndoStack();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          renderMarkdown(editor.value);
         });
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
-            // Ctrl+Z or Cmd+Z for undo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                undoAction();
-            }
-            
-            // Ctrl+Shift+Z or Cmd+Shift+Z for redo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-                e.preventDefault();
-                redoAction();
-            }
-            
-            // Ctrl+Y or Cmd+Y for redo (alternative)
-            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                e.preventDefault();
-                redoAction();
-            }
-
-            // Ctrl+S or Cmd+S for save
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                saveFile();
-            }
-
-            // Ctrl+O or Cmd+O for open
-            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-                e.preventDefault();
-                openFileDialog();
-            }
-
-            // Ctrl+N or Cmd+N for new
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                newFile();
-            }
-
-            // Ctrl+E or Cmd+E to toggle edit mode
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                if (fileLoaded) {
-                    if (editMode) {
-                        setViewMode();
-                    } else {
-                        setEditMode();
-                    }
-                }
-            }
-            
-            // F11 for fullscreen
-            if (e.key === 'F11') {
-                e.preventDefault();
-                toggleFullscreen();
-            }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redoAction(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redoAction(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); openFileDialog(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); newFile(); }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+            e.preventDefault();
+            if (fileLoaded) editMode ? setViewMode() : setEditMode();
+          }
+          if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
         });
 
-        // Markdown editing helper functions
+        // Markdown editing helpers
         function getSelectionOrLineInfo() {
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            const text = editor.value;
-
-            // If there's a selection, return it
-            if (start !== end) {
-                return {
-                    selection: text.substring(start, end),
-                    start: start,
-                    end: end
-                };
-            }
-
-            // Otherwise, get the current line
-            let lineStart = start;
-            while (lineStart > 0 && text[lineStart - 1] !== '\n') {
-                lineStart--;
-            }
-
-            let lineEnd = end;
-            while (lineEnd < text.length && text[lineEnd] !== '\n') {
-                lineEnd++;
-            }
-
-            return {
-                selection: text.substring(lineStart, lineEnd),
-                start: lineStart,
-                end: lineEnd
-            };
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const text = editor.value;
+          if (start !== end) {
+            return { selection: text.substring(start, end), start: start, end: end };
+          }
+          let lineStart = start;
+          while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
+          let lineEnd = end;
+          while (lineEnd < text.length && text[lineEnd] !== '\n') lineEnd++;
+          return { selection: text.substring(lineStart, lineEnd), start: lineStart, end: lineEnd };
         }
 
         function insertText(text) {
-            saveToUndoStack();
-
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            const editorValue = editor.value;
-
-            editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + text.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const editorValue = editor.value;
+          editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + text.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertMarkdown(prefix, suffix) {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            const newText = prefix + selection + suffix;
-            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-
-            // Place cursor after the inserted text
-            editor.selectionStart = editor.selectionEnd = start + newText.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          const newText = prefix + selection + suffix;
+          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + newText.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertHeading(level) {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            // Remove existing heading markers
-            let cleanText = selection.replace(/^#+\s*/, '');
-
-            // Add new heading level
-            const prefix = '#'.repeat(level) + ' ';
-            const newText = prefix + cleanText;
-
-            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + newText.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          let cleanText = selection.replace(/^#+\s*/, '');
+          const prefix = '#'.repeat(level) + ' ';
+          const newText = prefix + cleanText;
+          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + newText.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertLink() {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            let linkText = selection || 'link text';
-            let newText = `[${linkText}](https://)`;
-
-            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + linkText.length + 3;
-            editor.selectionEnd = start + newText.length - 1;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          let linkText = selection || 'link text';
+          let newText = `[${linkText}](https://)`;
+          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+          editor.selectionStart = start + linkText.length + 3;
+          editor.selectionEnd = start + newText.length - 1;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertImage() {
-            saveToUndoStack();
-
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            const selection = editor.value.substring(start, end);
-
-            let altText = selection || 'alt text';
-            let newText = `![${altText}](image-url)`;
-
-            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + altText.length + 4;
-            editor.selectionEnd = start + newText.length - 1;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const selection = editor.value.substring(start, end);
+          let altText = selection || 'alt text';
+          let newText = `![${altText}](image-url)`;
+          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+          editor.selectionStart = start + altText.length + 4;
+          editor.selectionEnd = start + newText.length - 1;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertBlockquote() {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            // Add blockquote to each line
-            const lines = selection.split('\n');
-            const quotedLines = lines.map(line => `> ${line}`).join('\n');
-
-            editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          const lines = selection.split('\n');
+          const quotedLines = lines.map(line => `> ${line}`).join('\n');
+          editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertCodeBlock() {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            const newText = '```\n' + selection + '\n```';
-
-            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + 4;
-            editor.selectionEnd = start + 4 + selection.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          const newText = '```\n' + selection + '\n```';
+          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+          editor.selectionStart = start + 4;
+          editor.selectionEnd = start + 4 + selection.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertList(prefix) {
-            saveToUndoStack();
-
-            const info = getSelectionOrLineInfo();
-            const selection = info.selection;
-            const start = info.start;
-            const end = info.end;
-
-            // Add list marker to each line
-            const lines = selection.split('\n');
-            const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
-
-            editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + listedLines.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const info = getSelectionOrLineInfo();
+          const selection = info.selection;
+          const start = info.start;
+          const end = info.end;
+          const lines = selection.split('\n');
+          const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
+          editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + listedLines.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
 
         function insertTable() {
-            saveToUndoStack();
-
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-
-            const table = `| Header 1 | Header 2 | Header 3 |
-| -------- | -------- | -------- |
-| Cell 1   | Cell 2   | Cell 3   |
-| Cell 4   | Cell 5   | Cell 6   |`;
-
-            editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + table.length;
-            editor.focus();
-            renderMarkdown(editor.value);
+          saveToUndoStack();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          const table = `| Header 1 | Header 2 | Header 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |`;
+          editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + table.length;
+          editor.focus();
+          renderMarkdown(editor.value);
         }
-		
-	// 添加版本号和时间戳以确保更新
-const SW_VERSION = '1.0.0';
-const SW_TIMESTAMP = new Date().getTime();
-
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // 添加时间戳以确保获取最新版本
-    const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
-    
-    // 先注销所有现有的 service worker
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for(let registration of registrations) {
-        registration.unregister();
-        console.log('Service worker unregistered');
-      }
-      
-      // 然后注册新的 service worker
-      navigator.serviceWorker.register(swUrl, {
-        scope: './'
-      })
-      .then(reg => {
-        console.log('New service worker registered with scope:', reg.scope);
-        
-        // 强制更新
-        reg.update();
-        
-        // 如果有新版本，立即激活
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        }
-      })
-      .catch(err => console.log('Service worker registration failed:', err));
-    });
-  });
-}
     </script>
 </body>
 </html>
