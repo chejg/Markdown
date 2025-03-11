@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Editor</title>
-    
+
     <!-- PWA Support -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#24292e">
@@ -12,21 +12,23 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="MD Editor">
     <link rel="apple-touch-icon" href="images/icon-192x192.png">
-    
+
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <!--  Load highlight.js  -->
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@9.1.7/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/emoji-toolkit@6.6.0/lib/js/joypixels.min.js"></script>
-    
+
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <style>
         /* Styles remain unchanged from the original */
         :root {
@@ -207,513 +209,588 @@
         let redoStack = [];
         let deferredPrompt = null;
 
+        // Function to dynamically load a script
+        function loadScript(url, callback) {
+            let script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = url;
+
+            script.onload = function() {
+                callback();
+            };
+
+            script.onerror = function() {
+                console.error('Failed to load script: ' + url);
+                callback(); // Still call callback to avoid blocking
+            };
+
+            document.head.appendChild(script);
+        }
+
         // Custom marked.js renderer
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
-          if (language === 'plantuml') {
-            const encoded = plantumlEncoder.encode(code);
-            const server = window.plantumlServer || 'https://www.plantuml.com/plantuml';
-            const url = `${server}/svg/${encoded}`;
-            return `
-              <div class="diagram-container" data-plantuml="${encoded}">
-                <div class="diagram-loading">Rendering PlantUML...</div>
-                <img src="${url}" alt="PlantUML Diagram" 
-                     onload="this.parentElement.querySelector('.diagram-loading').style.display='none'"
-                     onerror="this.parentElement.innerHTML='<div class=\'diagram-error\'>Failed to render PlantUML diagram</div>'">
-                <div class="diagram-toolbar">
-                  <button onclick="downloadSVG(this.parentElement.parentElement, 'plantuml')">↓ SVG</button>
-                  <button onclick="zoomDiagram(this.parentElement.parentElement)">🔍</button>
-                </div>
-              </div>`;
-          } else if (language === 'mermaid') {
-            return `
-              <div class="mermaid-container">
-                <div class="mermaid">${code}</div>
-                <div class="diagram-toolbar">
-                  <button onclick="downloadSVG(this.parentElement, 'mermaid')">↓ SVG</button>
-                </div>
-              </div>`;
-          } else {
-            // Ensure hljs is available before using it
-            if (typeof hljs !== 'undefined') {
-              const highlighted = hljs.highlight(code, { language: language || 'plaintext', ignoreIllegals: true }).value;
-              return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
-            } else {
-              console.error('highlight.js is not loaded!');
-              return `<pre><code class="language-${language}">${code}</code></pre>`; // Fallback if hljs is not available
+            if (language === 'plantuml') {
+                const encoded = plantumlEncoder.encode(code);
+                const server = window.plantumlServer || 'https://www.plantuml.com/plantuml';
+                const url = `${server}/svg/${encoded}`;
+                return `
+                    <div class="diagram-container" data-plantuml="${encoded}">
+                        <div class="diagram-loading">Rendering PlantUML...</div>
+                        <img src="${url}" alt="PlantUML Diagram"
+                             onload="this.parentElement.querySelector('.diagram-loading').style.display='none'"
+                             onerror="this.parentElement.innerHTML='<div class=\'diagram-error\'>Failed to render PlantUML diagram</div>'">
+                        <div class="diagram-toolbar">
+                            <button onclick="downloadSVG(this.parentElement.parentElement, 'plantuml')">↓ SVG</button>
+                            <button onclick="zoomDiagram(this.parentElement.parentElement)">🔍</button>
+                        </div>
+                    </div>`;
+            } else if (language === 'mermaid') {
+              return `
+                    <div class="mermaid-container">
+                        <div class="mermaid">${code}</div>
+                        <div class="diagram-toolbar">
+                            <button onclick="downloadSVG(this.parentElement, 'mermaid')">↓ SVG</button>
+                        </div>
+                    </div>`;
+            }  else {
+                // Use highlight.js if it's loaded, otherwise return plain code
+                if (typeof hljs !== 'undefined') {
+                    try{
+                      const highlighted = hljs.highlight(code, { language: language || 'plaintext', ignoreIllegals: true }).value;
+                      return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
+                    } catch (e){
+                      console.error('Highlighting error:', e);
+                      return `<pre><code class="language-${language}">${code}</code></pre>`;
+                    }
+
+                } else {
+                    console.error('highlight.js is not loaded!');
+                    return `<pre><code class="language-${language}">${code}</code></pre>`; // Fallback
+                }
             }
-          }
         };
 
         // Configure marked.js
         marked.setOptions({
-          renderer: renderer,
-          highlight: function(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-              return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
-            }
-            return hljs.highlightAuto(code).value;
-          },
-          breaks: true,
-          gfm: true,
-          tables: true,
-          smartLists: true,
-          smartypants: true
+            renderer: renderer,
+            breaks: true,
+            gfm: true,
+            tables: true,
+            smartLists: true,
+            smartypants: true
         });
 
         // PWA Installation
         window.addEventListener('beforeinstallprompt', (e) => {
-          e.preventDefault();
-          deferredPrompt = e;
-          pwaBanner.style.display = 'flex';
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaBanner.style.display = 'flex';
         });
 
         pwaInstallBtn.addEventListener('click', async () => {
-          if (deferredPrompt) {
-            pwaBanner.style.display = 'none';
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
-            deferredPrompt = null;
-          }
+            if (deferredPrompt) {
+                pwaBanner.style.display = 'none';
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} the install prompt`);
+                deferredPrompt = null;
+            }
         });
 
         pwaCloseBtn.addEventListener('click', () => {
-          pwaBanner.style.display = 'none';
+            pwaBanner.style.display = 'none';
         });
 
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            const SW_VERSION = '1.0.0';
-            const SW_TIMESTAMP = new Date().getTime();
-            const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
-            
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-              for (let registration of registrations) {
-                registration.unregister();
-                console.log('Service worker unregistered');
-              }
-              navigator.serviceWorker.register(swUrl, { scope: './' })
-                .then(reg => {
-                  console.log('New service worker registered with scope:', reg.scope);
-                  reg.update();
-                  if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                })
-                .catch(err => console.log('Service worker registration failed:', err));
+            window.addEventListener('load', () => {
+                const SW_VERSION = '1.0.0';
+                const SW_TIMESTAMP = new Date().getTime();
+                const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
+
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                        console.log('Service worker unregistered');
+                    }
+                    navigator.serviceWorker.register(swUrl, { scope: './' })
+                        .then(reg => {
+                            console.log('New service worker registered with scope:', reg.scope);
+                            reg.update();
+                            if (reg.waiting) {
+                                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        })
+                        .catch(err => console.log('Service worker registration failed:', err));
+                });
             });
-          });
         }
 
+      // Modified renderMarkdown function
         function renderMarkdown(text) {
-          const html = marked.parse(text);
-          preview.innerHTML = joypixels.shortnameToImage(html);
+            const html = marked.parse(text);
+            preview.innerHTML = joypixels.shortnameToImage(html);
 
-          // Initialize Mermaid with security config
-        mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: 'strict',
-          theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
-          flowchart: { 
-            useMaxWidth: true,
-            htmlLabels: true
-          },
-          er: {
-            useMaxWidth: true
-          },
-          sequence: {
-            useMaxWidth: true,
-            noteFontWeight: 'normal'
-          }
-        });
-        setTimeout(() => {
-  try {
-    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-  } catch (error) {
-    console.error('Mermaid initialization error:', error);
-  }
-}, 10);
+            // Initialize Mermaid with security config
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false, // Do not start on page load
+                    securityLevel: 'strict',
+                    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+                    flowchart: { useMaxWidth: true, htmlLabels: true },
+                    er: { useMaxWidth: true },
+                    sequence: { useMaxWidth: true, noteFontWeight: 'normal' }
+                });
 
-          // Render math with proper initialization
-          setTimeout(() => {
-            renderMathInElement(preview, {
-              delimiters: [
-                { left: '$$', right: '$$', display: true },
-                { left: '$', right: '$', display: false },
-                { left: '\$', right: '\$', display: false },
-                { left: '\$$', right: '\\]', display: true }
-              ],
-              throwOnError: false,
-              ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
-              ignoredClasses: ["mermaid-diagram", "diagram-container"]
+                // Manually initialize Mermaid diagrams
+                setTimeout(() => {
+                    try {
+                        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                    } catch (error) {
+                        console.error('Mermaid initialization error:', error);
+                        // Handle Mermaid errors, possibly by displaying a message in the diagram container
+                        document.querySelectorAll('.mermaid-container').forEach(container => {
+                            container.innerHTML = '<div class="diagram-error">Failed to render Mermaid diagram.</div>';
+                        });
+                    }
+                }, 10); // Short delay
+            } else {
+                console.error("Mermaid is not defined");
+            }
+
+            // Render math with proper initialization
+            setTimeout(() => {
+                renderMathInElement(preview, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\$', right: '\$', display: false },
+                        { left: '\$$', right: '\\]', display: true }
+                    ],
+                    throwOnError: false,
+                    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+                    ignoredClasses: ["mermaid-diagram", "diagram-container"]
+                });
+            }, 10);
+
+            // Apply syntax highlighting with highlight.js *after* the content is set
+            if (typeof hljs !== 'undefined') {
+                preview.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            } else {
+              console.error("hljs is undefined");
+            }
+
+            // Add checkbox functionality to task lists
+            const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = false;
+                checkbox.addEventListener('change', function() {
+                    const listItem = this.closest('li');
+                    const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
+                    const lines = editor.value.split('\n');
+                    let currentListIndex = -1;
+                    let lineIndex = -1;
+
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].match(/- \[[ x]$$/i)) {
+                            currentListIndex++;
+                            if (currentListIndex === listItemIndex) {
+                                lineIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (lineIndex !== -1) {
+                        saveToUndoStack();
+                        lines[lineIndex] = lines[lineIndex].replace(
+                            /- $$[ x]$$/i,
+                            `- [${this.checked ? 'x' : ' '}]`
+                        );
+                        editor.value = lines.join('\n');
+                        renderMarkdown(editor.value);
+                    }
+                });
             });
-          }, 10);
-
-          // Apply syntax highlighting
-          preview.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-          });
-
-          // Add checkbox functionality to task lists
-          const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
-          checkboxes.forEach(checkbox => {
-            checkbox.disabled = false;
-            checkbox.addEventListener('change', function() {
-              const listItem = this.closest('li');
-              const listItemIndex = Array.from(listItem.parentNode.children).indexOf(listItem);
-              const lines = editor.value.split('\n');
-              let currentListIndex = -1;
-              let lineIndex = -1;
-
-              for (let i = 0; i < lines.length; i++) {
-                if (lines[i].match(/- \[[ x]$$/i)) {
-                  currentListIndex++;
-                  if (currentListIndex === listItemIndex) {
-                    lineIndex = i;
-                    break;
-                  }
-                }
-              }
-
-              if (lineIndex !== -1) {
-                saveToUndoStack();
-                lines[lineIndex] = lines[lineIndex].replace(
-                  /- $$[ x]$$/i,
-                  `- [${this.checked ? 'x' : ' '}]`
-                );
-                editor.value = lines.join('\n');
-                renderMarkdown(editor.value);
-              }
-            });
-          });
         }
 
         function openFile(file) {
-          if (!file) return;
-          if (!file.name.toLowerCase().endsWith('.md')) {
-            alert('Please select a Markdown (.md) file.');
-            return;
-          }
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.md')) {
+                alert('Please select a Markdown (.md) file.');
+                return;
+            }
 
-          currentFileName = file.name;
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const content = e.target.result;
-            editor.value = content;
-            renderMarkdown(content);
-            fileLoaded = true;
-            setViewMode();
-            editBtn.style.display = 'flex';
-            saveBtn.style.display = 'flex';
-            newBtn.style.display = 'flex';
-            undoStack = [];
-            redoStack = [];
-            saveToUndoStack();
-          };
-          reader.readAsText(file);
+            currentFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                editor.value = content;
+                renderMarkdown(content);
+                fileLoaded = true;
+                setViewMode();
+                editBtn.style.display = 'flex';
+                saveBtn.style.display = 'flex';
+                newBtn.style.display = 'flex';
+                undoStack = [];
+                redoStack = [];
+                saveToUndoStack();
+            };
+            reader.readAsText(file);
         }
 
         function setViewMode() {
-          editMode = false;
-          if (fileLoaded) {
-            dropzone.style.display = 'none';
-            editorContainer.style.display = 'flex';
-            editorSection.style.display = 'none';
-            previewContainer.style.display = 'block';
-            previewContainer.style.width = '100%';
-          }
-          editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-          editBtn.title = 'Edit mode';
+            editMode = false;
+            if (fileLoaded) {
+                dropzone.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                editorSection.style.display = 'none';
+                previewContainer.style.display = 'block';
+                previewContainer.style.width = '100%';
+            }
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = 'Edit mode';
         }
 
         function setEditMode() {
-          editMode = true;
-          if (fileLoaded) {
-            dropzone.style.display = 'none';
-            editorContainer.style.display = 'flex';
-            editorSection.style.display = 'flex';
-            previewContainer.style.display = 'block';
-            previewContainer.style.width = '50%';
-          }
-          editBtn.innerHTML = '<i class="fas fa-eye"></i>';
-          editBtn.title = 'View mode';
+            editMode = true;
+            if (fileLoaded) {
+                dropzone.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                editorSection.style.display = 'flex';
+                previewContainer.style.display = 'block';
+                previewContainer.style.width = '50%';
+            }
+            editBtn.innerHTML = '<i class="fas fa-eye"></i>';
+            editBtn.title = 'View mode';
         }
 
         function saveFile() {
-          const content = editor.value;
-          const blob = new Blob([content], { type: 'text/markdown' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = currentFileName || 'document.md';
-          a.click();
-          URL.revokeObjectURL(a.href);
+            const content = editor.value;
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = currentFileName || 'document.md';
+            a.click();
+            URL.revokeObjectURL(a.href);
         }
 
         function newFile() {
-          if (editor.value && !confirm('Discard current document?')) return;
-          currentFileName = '';
-          editor.value = '';
-          renderMarkdown('');
-          fileLoaded = true;
-          setEditMode();
-          undoStack = [];
-          redoStack = [];
-          saveToUndoStack();
+            if (editor.value && !confirm('Discard current document?')) return;
+            currentFileName = '';
+            editor.value = '';
+            renderMarkdown('');
+            fileLoaded = true;
+            setEditMode();
+            undoStack = [];
+            redoStack = [];
+            saveToUndoStack();
         }
 
         function saveToUndoStack() {
-          if (undoStack.length >= 50) undoStack.shift();
-          undoStack.push(editor.value);
-          redoStack = [];
+            if (undoStack.length >= 50) undoStack.shift();
+            undoStack.push(editor.value);
+            redoStack = [];
         }
 
         function undoAction() {
-          if (undoStack.length > 1) {
-            redoStack.push(undoStack.pop());
-            const previousState = undoStack[undoStack.length - 1];
-            editor.value = previousState;
-            renderMarkdown(previousState);
-          }
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const previousState = undoStack[undoStack.length - 1];
+                editor.value = previousState;
+                renderMarkdown(previousState);
+            }
         }
 
         function redoAction() {
-          if (redoStack.length > 0) {
-            const nextState = redoStack.pop();
-            undoStack.push(nextState);
-            editor.value = nextState;
-            renderMarkdown(nextState);
-          }
+            if (redoStack.length > 0) {
+                const nextState = redoStack.pop();
+                undoStack.push(nextState);
+                editor.value = nextState;
+                renderMarkdown(nextState);
+            }
         }
 
         function toggleFullscreen() {
-          const doc = document.documentElement;
-          if (!document.fullscreenElement) {
-            if (doc.requestFullscreen) doc.requestFullscreen();
-            else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
-            else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
-            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-            fullscreenBtn.title = "Exit Fullscreen";
-          } else {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            else if (document.msExitFullscreen) document.msExitFullscreen();
-            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            fullscreenBtn.title = "Fullscreen";
-          }
+            const doc = document.documentElement;
+            if (!document.fullscreenElement) {
+                if (doc.requestFullscreen) doc.requestFullscreen();
+                else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+                else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                fullscreenBtn.title = "Exit Fullscreen";
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+                fullscreenBtn.title = "Fullscreen";
+            }
         }
 
         // Event listeners
         function openFileDialog() {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.md';
-          input.onchange = function(e) {
-            if (e.target.files.length > 0) openFile(e.target.files[0]);
-          };
-          input.click();
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.md';
+            input.onchange = function(e) {
+                if (e.target.files.length > 0) openFile(e.target.files[0]);
+            };
+            input.click();
         }
 
         dropzone.addEventListener('click', openFileDialog);
         openBtn.addEventListener('click', openFileDialog);
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-          dropzone.addEventListener(eventName, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }, false);
-          document.body.addEventListener(eventName, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }, false);
+            dropzone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+            document.body.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
         });
 
         dropzone.addEventListener('dragenter', function() { this.style.backgroundColor = '#e9e9e9'; });
         dropzone.addEventListener('dragleave', function() { this.style.backgroundColor = ''; });
         dropzone.addEventListener('drop', function(e) {
-          this.style.backgroundColor = '';
-          if (e.dataTransfer.files.length > 0) openFile(e.dataTransfer.files[0]);
+            this.style.backgroundColor = '';
+            if (e.dataTransfer.files.length > 0) openFile(e.dataTransfer.files[0]);
         });
 
         editBtn.addEventListener('click', function() {
-          if (editMode) setViewMode();
-          else setEditMode();
+            if (editMode) setViewMode();
+            else setEditMode();
         });
 
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
 
         editor.addEventListener('scroll', function() {
-          if (editMode) {
-            const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-            const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
-            previewContainer.scrollTop = previewScrollPosition;
-          }
+            if (editMode) {
+                const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+                const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
+                previewContainer.scrollTop = previewScrollPosition;
+            }
         });
 
         previewContainer.addEventListener('scroll', function() {
-          if (editMode) {
-            const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
-            const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
-            editor.scrollTop = editorScrollPosition;
-          }
+            if (editMode) {
+                const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
+                const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
+                editor.scrollTop = editorScrollPosition;
+            }
         });
 
         editor.addEventListener('input', function() {
-          saveToUndoStack();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            renderMarkdown(editor.value);
         });
 
         document.addEventListener('keydown', function(e) {
-          if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redoAction(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redoAction(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); openFileDialog(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); newFile(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-            e.preventDefault();
-            if (fileLoaded) editMode ? setViewMode() : setEditMode();
-          }
-          if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redoAction(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redoAction(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); openFileDialog(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); newFile(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                if (fileLoaded) editMode ? setViewMode() : setEditMode();
+            }
+            if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
         });
 
         // Markdown editing helpers
         function getSelectionOrLineInfo() {
-          const start = editor.selectionStart;
-          const end = editor.selectionEnd;
-          const text = editor.value;
-          if (start !== end) {
-            return { selection: text.substring(start, end), start: start, end: end };
-          }
-          let lineStart = start;
-          while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
-          let lineEnd = end;
-          while (lineEnd < text.length && text[lineEnd] !== '\n') lineEnd++;
-          return { selection: text.substring(lineStart, lineEnd), start: lineStart, end: lineEnd };
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            if (start !== end) {
+                return { selection: text.substring(start, end), start: start, end: end };
+            }
+            let lineStart = start;
+            while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
+            let lineEnd = end;
+            while (lineEnd < text.length && text[lineEnd] !== '\n') lineEnd++;
+            return { selection: text.substring(lineStart, lineEnd), start: lineStart, end: lineEnd };
         }
 
         function insertText(text) {
-          saveToUndoStack();
-          const start = editor.selectionStart;
-          const end = editor.selectionEnd;
-          const editorValue = editor.value;
-          editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + text.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const editorValue = editor.value;
+            editor.value = editorValue.substring(0, start) + text + editorValue.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + text.length;
+            editor.focus();
+		    renderMarkdown(editor.value);
         }
 
         function insertMarkdown(prefix, suffix) {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;
-          const start = info.start;
-          const end = info.end;
-          const newText = prefix + selection + suffix;
-          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + newText.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            const newText = prefix + selection + suffix;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + newText.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertHeading(level) {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;		  
-		  const start = info.start;
-          const end = info.end;
-          let cleanText = selection.replace(/^#+\s*/, '');
-          const prefix = '#'.repeat(level) + ' ';
-          const newText = prefix + cleanText;
-          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + newText.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            let cleanText = selection.replace(/^#+\s*/, '');
+            const prefix = '#'.repeat(level) + ' ';
+            const newText = prefix + cleanText;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + newText.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertLink() {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;
-          const start = info.start;
-          const end = info.end;
-          let linkText = selection || 'link text';
-          let newText = `[${linkText}](https://)`;
-          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-          editor.selectionStart = start + linkText.length + 3;
-          editor.selectionEnd = start + newText.length - 1;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            let linkText = selection || 'link text';
+            let newText = `[${linkText}](https://)`;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + linkText.length + 3;
+            editor.selectionEnd = start + newText.length - 1;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertImage() {
-          saveToUndoStack();
-          const start = editor.selectionStart;
-          const end = editor.selectionEnd;
-          const selection = editor.value.substring(start, end);
-          let altText = selection || 'alt text';
-          let newText = `![${altText}](image-url)`;
-          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-          editor.selectionStart = start + altText.length + 4;
-          editor.selectionEnd = start + newText.length - 1;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const selection = editor.value.substring(start, end);
+            let altText = selection || 'alt text';
+            let newText = `![${altText}](image-url)`;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + altText.length + 4;
+            editor.selectionEnd = start + newText.length - 1;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertBlockquote() {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;
-          const start = info.start;
-          const end = info.end;
-          const lines = selection.split('\n');
-          const quotedLines = lines.map(line => `> ${line}`).join('\n');
-          editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            const lines = selection.split('\n');
+            const quotedLines = lines.map(line => `> ${line}`).join('\n');
+            editor.value = editor.value.substring(0, start) + quotedLines + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + quotedLines.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertCodeBlock() {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;
-          const start = info.start;
-          const end = info.end;
-          const newText = '```\n' + selection + '\n```';
-          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-          editor.selectionStart = start + 4;
-          editor.selectionEnd = start + 4 + selection.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            const newText = '```\n' + selection + '\n```';
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            editor.selectionStart = start + 4;
+            editor.selectionEnd = start + 4 + selection.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertList(prefix) {
-          saveToUndoStack();
-          const info = getSelectionOrLineInfo();
-          const selection = info.selection;
-          const start = info.start;
-          const end = info.end;
-          const lines = selection.split('\n');
-          const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
-          editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + listedLines.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const info = getSelectionOrLineInfo();
+            const selection = info.selection;
+            const start = info.start;
+            const end = info.end;
+            const lines = selection.split('\n');
+            const listedLines = lines.map(line => `${prefix}${line}`).join('\n');
+            editor.value = editor.value.substring(0, start) + listedLines + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + listedLines.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
 
         function insertTable() {
-          saveToUndoStack();
-          const start = editor.selectionStart;
-          const end = editor.selectionEnd;
-          const table = `| Header 1 | Header 2 | Header 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |`;
-          editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
-          editor.selectionStart = editor.selectionEnd = start + table.length;
-          editor.focus();
-          renderMarkdown(editor.value);
+            saveToUndoStack();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const table = `| Header 1 | Header 2 | Header 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |`;
+            editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + table.length;
+            editor.focus();
+            renderMarkdown(editor.value);
         }
+
+        // Utility function to download SVG - Corrected and Repositioned
+        function downloadSVG(container, type) {
+            if (type === 'plantuml') {
+                const img = container.querySelector('img');
+                if (!img) return;
+                const url = img.src;
+                const filename = 'diagram.svg';
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+            } else if (type === 'mermaid') {
+                // For Mermaid, we need to get the SVG content and create a blob
+                const svgElement = container.querySelector('svg'); // Directly select the SVG element
+                if (!svgElement) {
+                    console.error('SVG element not found in Mermaid container.');
+                    return;
+                }
+
+                // Serialize the SVG to a string
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svgElement);
+
+                // Create a Blob from the SVG string
+                const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+
+                // Create a download link and trigger the download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mermaid-diagram.svg';
+                document.body.appendChild(a); // Append the link to the body
+                a.click();
+
+                // Clean up: remove the link and revoke the Blob URL
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+        
+        function zoomDiagram(container){
+            const img = container.querySelector('img');
+            if (!img) return;
+            const currentScale = container.style.transform ? parseFloat(container.style.transform.replace('scale(', '').replace(')', '')) : 1;
+            const newScale = currentScale * 1.2; // Increase scale
+            container.style.transform = `scale(${newScale})`;
+            container.style.overflow = 'auto'; // Ensure scrollbars appear if needed
+        }
+
     </script>
 </body>
 </html>
