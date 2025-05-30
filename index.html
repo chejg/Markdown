@@ -46,7 +46,7 @@
         }
 
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; background-color: #f5f5f5; color: var(--text-color); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; background-color: #f5f5f5; color: var(--text-color); overflow: hidden;}
         #sidebar { width: 40px; background-color: var(--sidebar-bg); display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
         #sidebar button { background: none; border: none; color: white; font-size: 16px; margin-bottom: 15px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 5px; transition: background-color 0.2s; }
         #sidebar button:hover { background-color: #444; }
@@ -208,8 +208,9 @@
         let undoStack = [];
         let redoStack = [];
         let deferredPrompt = null;
+        let isScrollingProgrammatically = false; // 新增标志位，用于解决滚动抖动问题
 
-        // Function to dynamically load a script
+        // Function to dynamically load a script (kept as is, not directly related to reported issues)
         function loadScript(url, callback) {
             let script = document.createElement("script");
             script.type = "text/javascript";
@@ -302,28 +303,35 @@
             pwaBanner.style.display = 'none';
         });
 
-        // Register service worker for PWA
+        // Register service worker for PWA (改进注册逻辑)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const SW_VERSION = '1.0.0';
-                const SW_TIMESTAMP = new Date().getTime();
-                const swUrl = `service-worker.js?v=${SW_VERSION}&t=${SW_TIMESTAMP}`;
+                const SW_VERSION = '1.0.0'; // 保持此版本号不变，除非有实际更新
+                const swUrl = `service-worker.js?v=${SW_VERSION}`; // 移除时间戳
 
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for (let registration of registrations) {
-                        registration.unregister();
-                        console.log('Service worker unregistered');
-                    }
-                    navigator.serviceWorker.register(swUrl, { scope: './' })
-                        .then(reg => {
-                            console.log('New service worker registered with scope:', reg.scope);
-                            reg.update();
-                            if (reg.waiting) {
-                                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                            }
-                        })
-                        .catch(err => console.log('Service worker registration failed:', err));
-                });
+                navigator.serviceWorker.register(swUrl, { scope: './' })
+                    .then(reg => {
+                        console.log('Service worker registered with scope:', reg.scope);
+
+                        // 监听 Service Worker 更新
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // 新内容已安装，可以提示用户刷新或直接激活
+                                    console.log('New content available, activating...');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        });
+
+                        // 如果有等待中的 Service Worker，立即激活它
+                        if (reg.waiting) {
+                            console.log('Activating waiting service worker...');
+                            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    })
+                    .catch(err => console.log('Service worker registration failed:', err));
             });
         }
 
@@ -365,8 +373,9 @@
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
                         { left: '$', right: '$', display: false },
-                        { left: '\$', right: '\$', display: false },
-                        { left: '\$$', right: '\\]', display: true }
+                        // 修复：KaTeX 的默认转义规则，通常不需要额外的反斜杠转义
+                        // { left: '\$', right: '\$', display: false },
+                        // { left: '\$$', right: '\\]', display: true }
                     ],
                     throwOnError: false,
                     ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
@@ -395,7 +404,8 @@
                     let lineIndex = -1;
 
                     for (let i = 0; i < lines.length; i++) {
-                        if (lines[i].match(/- \[[ x]$$/i)) {
+                        // 修复：修正任务列表复选框的正则表达式
+                        if (lines[i].match(/^- \[[ x]\]/i)) {
                             currentListIndex++;
                             if (currentListIndex === listItemIndex) {
                                 lineIndex = i;
@@ -405,9 +415,9 @@
                     }
 
                     if (lineIndex !== -1) {
-                        saveToUndoStack();
+                        saveToUndoStack(); // 勾选/取消勾选也应保存撤销状态
                         lines[lineIndex] = lines[lineIndex].replace(
-                            /- $$[ x]$$/i,
+                            /^- \[[ x]\]/i, // 修复：修正正则表达式
                             `- [${this.checked ? 'x' : ' '}]`
                         );
                         editor.value = lines.join('\n');
@@ -437,7 +447,7 @@
                 newBtn.style.display = 'flex';
                 undoStack = [];
                 redoStack = [];
-                saveToUndoStack();
+                saveToUndoStack(); // 初始加载时保存一个状态
             };
             reader.readAsText(file);
         }
@@ -487,7 +497,7 @@
             setEditMode();
             undoStack = [];
             redoStack = [];
-            saveToUndoStack();
+            saveToUndoStack(); // 新建文件时保存一个状态
         }
 
         function saveToUndoStack() {
@@ -497,7 +507,7 @@
         }
 
         function undoAction() {
-            if (undoStack.length > 1) {
+            if (undoStack.length > 1) { // 至少需要两个状态才能撤销
                 redoStack.push(undoStack.pop());
                 const previousState = undoStack[undoStack.length - 1];
                 editor.value = previousState;
@@ -571,25 +581,43 @@
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
 
+        // 修复：滚动同步抖动问题
         editor.addEventListener('scroll', function() {
             if (editMode) {
+                if (isScrollingProgrammatically) {
+                    isScrollingProgrammatically = false; // 重置标志位
+                    return; // 跳过由程序引起的滚动事件
+                }
                 const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
                 const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
+                isScrollingProgrammatically = true; // 在设置 scrollTop 前设置标志位
                 previewContainer.scrollTop = previewScrollPosition;
             }
         });
 
         previewContainer.addEventListener('scroll', function() {
             if (editMode) {
+                if (isScrollingProgrammatically) {
+                    isScrollingProgrammatically = false; // 重置标志位
+                    return; // 跳过由程序引起的滚动事件
+                }
                 const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
                 const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
+                isScrollingProgrammatically = true; // 在设置 scrollTop 前设置标志位
                 editor.scrollTop = editorScrollPosition;
             }
         });
 
+        // 修复：对 input 事件进行防抖处理
+        let debounceTimeout;
+        const DEBOUNCE_DELAY = 300; // 300毫秒的防抖延迟
+
         editor.addEventListener('input', function() {
-            saveToUndoStack();
-            renderMarkdown(editor.value);
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                saveToUndoStack();
+                renderMarkdown(editor.value);
+            }, DEBOUNCE_DELAY);
         });
 
         document.addEventListener('keydown', function(e) {
@@ -640,7 +668,8 @@
             const end = info.end;
             const newText = prefix + selection + suffix;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + newText.length;
+            editor.selectionStart = start + newText.length; // 将光标移到新文本的末尾
+            editor.selectionEnd = start + newText.length;
             editor.focus();
             renderMarkdown(editor.value);
         }
@@ -651,7 +680,7 @@
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            let cleanText = selection.replace(/^#+\s*/, '');
+            let cleanText = selection.replace(/^#+\s*/, ''); // 移除已有的标题符号
             const prefix = '#'.repeat(level) + ' ';
             const newText = prefix + cleanText;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
@@ -669,7 +698,7 @@
             let linkText = selection || 'link text';
             let newText = `[${linkText}](https://)`;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + linkText.length + 3;
+            editor.selectionStart = start + linkText.length + 3; // 将光标放在 URL 部分
             editor.selectionEnd = start + newText.length - 1;
             editor.focus();
             renderMarkdown(editor.value);
@@ -683,7 +712,7 @@
             let altText = selection || 'alt text';
             let newText = `![${altText}](image-url)`;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + altText.length + 4;
+            editor.selectionStart = start + altText.length + 4; // 将光标放在 URL 部分
             editor.selectionEnd = start + newText.length - 1;
             editor.focus();
             renderMarkdown(editor.value);
@@ -711,7 +740,7 @@
             const end = info.end;
             const newText = '```\n' + selection + '\n```';
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + 4;
+            editor.selectionStart = start + 4; // 将光标放在代码块内部
             editor.selectionEnd = start + 4 + selection.length;
             editor.focus();
             renderMarkdown(editor.value);
@@ -785,10 +814,12 @@
         function zoomDiagram(container){
             const img = container.querySelector('img');
             if (!img) return;
+            // 获取当前缩放值，如果未设置则默认为1
             const currentScale = container.style.transform ? parseFloat(container.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            const newScale = currentScale * 1.2; // Increase scale
+            const newScale = currentScale * 1.2; // 增加缩放
             container.style.transform = `scale(${newScale})`;
-            container.style.overflow = 'auto'; // Ensure scrollbars appear if needed
+            container.style.transformOrigin = 'top left'; // 设置缩放原点，防止元素移出视线
+            container.style.overflow = 'auto'; // 确保需要时出现滚动条
         }
 
     </script>
