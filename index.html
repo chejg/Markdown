@@ -226,6 +226,16 @@
         let deferredPrompt = null;
         let isScrollingProgrammatically = false;
 
+        // --- Helper Function: Escape HTML ---
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
         // Custom marked.js renderer
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -253,17 +263,26 @@
                         </div>
                     </div>`;
             }  else {
-                if (typeof hljs !== 'undefined') {
-                    try{
-                      const highlighted = hljs.highlight(code, { language: language || 'plaintext', ignoreIllegals: true }).value;
-                      return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
-                    } catch (e){
-                      return `<pre><code class="language-${language}">${code}</code></pre>`;
-                    }
+                // FIXED: Robust handling for highlight.js
+                let highlightedCode;
+                let validLang = false;
 
-                } else {
-                    return `<pre><code class="language-${language}">${code}</code></pre>`; 
+                if (language && typeof hljs !== 'undefined' && hljs.getLanguage(language)) {
+                    validLang = true;
+                    try {
+                        highlightedCode = hljs.highlight(code, { language: language }).value;
+                    } catch (e) {
+                        validLang = false;
+                    }
                 }
+
+                // Fallback: If no language, invalid language, or error, escape HTML manually
+                if (!validLang) {
+                    highlightedCode = escapeHtml(code);
+                }
+
+                // Add 'hljs' class to code tag for proper styling from the theme
+                return `<pre><code class="hljs language-${language || 'plaintext'}">${highlightedCode}</code></pre>`;
             }
         };
 
@@ -322,7 +341,8 @@
                         try {
                             mermaid.init(undefined, document.querySelectorAll('.mermaid'));
                         } catch (error) {
-                            console.warn('Mermaid partial render error', error);
+                            // Suppress partial render errors while typing
+                            // console.warn('Mermaid partial render error', error);
                         }
                     }, 10);
                 }
@@ -390,13 +410,10 @@
                 const content = e.target.result;
                 editor.value = content;
                 
-                // FIX: Set fileLoaded AND view mode BEFORE rendering
-                // This ensures the preview container is visible in the DOM
-                // so that the offsetParent check in renderMarkdown passes.
                 fileLoaded = true;
                 setViewMode(); 
                 
-                renderMarkdown(content); // Now render
+                renderMarkdown(content);
 
                 editBtn.style.display = 'flex';
                 saveBtn.style.display = 'flex';
@@ -450,11 +467,10 @@
             currentFileName = '';
             editor.value = '';
             
-            // FIX: Set loaded and edit mode BEFORE rendering
             fileLoaded = true;
             setEditMode(); 
             
-            renderMarkdown(''); // Now render
+            renderMarkdown('');
 
             editBtn.style.display = 'flex';
             saveBtn.style.display = 'flex';
