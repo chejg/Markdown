@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Editor (Performance Optimized)</title>
+    <title>Markdown Editor (Fixed)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e3e3e3">
@@ -67,7 +67,6 @@
             overflow: auto; 
             padding: 0; 
             background-color: white;
-            /* Optimization: Improves rendering performance for long content */
             content-visibility: auto; 
             contain-intrinsic-size: 1000px; 
         }
@@ -256,7 +255,6 @@
             }  else {
                 if (typeof hljs !== 'undefined') {
                     try{
-                      // Optimization: highlight synchronous here, so we don't querySelectorAll later
                       const highlighted = hljs.highlight(code, { language: language || 'plaintext', ignoreIllegals: true }).value;
                       return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
                     } catch (e){
@@ -278,7 +276,7 @@
             smartypants: true
         });
 
-        // PWA Installation (Existing code)
+        // PWA Installation
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -302,17 +300,13 @@
             });
         }
 
-      // Optimized renderMarkdown function
         function renderMarkdown(text) {
-            // Optimization: If preview is hidden (we are in full edit mode on mobile or split view hidden), skip rendering
+            // Optimization: If preview is hidden, skip rendering
             if (previewContainer.offsetParent === null) return;
 
-            // Optimization: Use JoyPixels only if strict necessity, it parses the whole string.
-            // Keeping it for now, but be aware it's a cost.
             const html = marked.parse(text);
             preview.innerHTML = joypixels.shortnameToImage(html);
 
-            // Optimization: Defer heavy diagram/math rendering to avoid blocking UI immediately
             requestAnimationFrame(() => {
                 if (typeof mermaid !== 'undefined') {
                     mermaid.initialize({
@@ -324,7 +318,6 @@
                         sequence: { useMaxWidth: true, noteFontWeight: 'normal' }
                     });
 
-                    // Mermaid init can be slow, wrap in try/catch and small timeout
                     setTimeout(() => {
                         try {
                             mermaid.init(undefined, document.querySelectorAll('.mermaid'));
@@ -347,11 +340,8 @@
                         });
                     }
                 }, 20);
-                
-                // Note: highlight.js is handled inside renderer.code now to save a double-pass
             });
 
-            // Re-attach checkbox listeners (lightweight)
             const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
                 checkbox.disabled = false;
@@ -399,9 +389,15 @@
             reader.onload = function(e) {
                 const content = e.target.result;
                 editor.value = content;
-                renderMarkdown(content);
+                
+                // FIX: Set fileLoaded AND view mode BEFORE rendering
+                // This ensures the preview container is visible in the DOM
+                // so that the offsetParent check in renderMarkdown passes.
                 fileLoaded = true;
-                setViewMode();
+                setViewMode(); 
+                
+                renderMarkdown(content); // Now render
+
                 editBtn.style.display = 'flex';
                 saveBtn.style.display = 'flex';
                 undoStack = [];
@@ -433,7 +429,6 @@
                 previewContainer.style.display = 'block';
                 previewContainer.style.width = '50%';
                 
-                // Trigger render when entering edit mode (in case it was skipped in view mode)
                 renderMarkdown(editor.value);
             }
             editBtn.innerHTML = '<i class="fas fa-eye"></i>';
@@ -454,9 +449,13 @@
             if (fileLoaded && editor.value && !confirm('Discard current document?')) return;
             currentFileName = '';
             editor.value = '';
-            renderMarkdown('');
+            
+            // FIX: Set loaded and edit mode BEFORE rendering
             fileLoaded = true;
-            setEditMode();
+            setEditMode(); 
+            
+            renderMarkdown(''); // Now render
+
             editBtn.style.display = 'flex';
             saveBtn.style.display = 'flex';
             undoStack = [];
@@ -546,7 +545,6 @@
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
 
-        // Optimization: Synchronized scrolling with requestAnimationFrame for smoothness
         let syncScrollPending = false;
         editor.addEventListener('scroll', function() {
             if (editMode && !isScrollingProgrammatically && !syncScrollPending) {
@@ -556,7 +554,6 @@
                     const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
                     isScrollingProgrammatically = true;
                     previewContainer.scrollTop = previewScrollPosition;
-                    // Reset flag after a small delay to allow scroll event to settle
                     setTimeout(() => { isScrollingProgrammatically = false; }, 50);
                     syncScrollPending = false;
                 });
@@ -578,13 +575,10 @@
             }
         });
 
-        // Optimization: Dynamic Debounce based on content length
         let debounceTimeout;
-        
         editor.addEventListener('input', function() {
             clearTimeout(debounceTimeout);
             const contentLen = editor.value.length;
-            // Dynamic delay: 300ms for small files, up to 1500ms for massive files
             let delay = 300;
             if (contentLen > 50000) delay = 800;
             if (contentLen > 200000) delay = 1500;
@@ -609,7 +603,6 @@
             if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
         });
 
-        // Helper functions for inserting markdown (unchanged logic)
         function getSelectionOrLineInfo() {
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
