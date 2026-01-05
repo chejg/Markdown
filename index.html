@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Editor</title>
 
-    <!-- PWA Support -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e3e3e3">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,10 +12,8 @@
     <meta name="apple-mobile-web-app-title" content="MD Editor">
     <link rel="apple-touch-icon" href="images/icon-192x192.png">
 
-    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
-    <!--  Load highlight.js  -->
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
@@ -26,11 +23,9 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@9.1.7/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/emoji-toolkit@6.6.0/lib/js/joypixels.min.js"></script>
 
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* Styles remain unchanged from the original */
         :root {
             --sidebar-bg: #5f676e;
             --toolbar-bg: #f1f1f1;
@@ -51,9 +46,15 @@
         #sidebar button { background: none; border: none; color: white; font-size: 16px; margin-bottom: 15px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 5px; transition: background-color 0.2s; }
         #sidebar button:hover { background-color: #444; }
         #main-container { flex: 1; display: flex; overflow: hidden; }
+        
+        /* Dropzone Styles Updated */
         #dropzone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #666; font-size: 18px; cursor: pointer; text-align: center; padding: 20px; transition: background-color 0.2s; }
         #dropzone:hover { background-color: #e9e9e9; }
         #dropzone-icon { font-size: 48px; margin-bottom: 20px; color: #999; }
+        .dropzone-action-separator { margin: 15px 0; font-size: 14px; opacity: 0.6; }
+        #create-new-btn-landing { padding: 10px 20px; background-color: #fff; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; font-size: 16px; color: #333; transition: all 0.2s; z-index: 10; }
+        #create-new-btn-landing:hover { background-color: var(--button-hover); border-color: #bbb; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
         #editor-container { width: 100%; height: 100%; display: none; flex-direction: row; }
         #editor-section { width: 50%; height: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
         #toolbar { background-color: var(--toolbar-bg); padding: 5px; border-bottom: 1px solid var(--border-color); display: flex; flex-wrap: wrap; }
@@ -62,6 +63,8 @@
         #editor { flex: 1; overflow: auto; padding: 15px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 14px; line-height: 1.5; border: none; resize: none; background-color: var(--editor-bg); tab-size: 4; }
         #preview-container { width: 50%; height: 100%; overflow: auto; padding: 0; background-color: white; }
         #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; }
+        
+        /* Preview Styles */
         #preview h1, #preview h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
         #preview h1 { font-size: 2em; }
         #preview h2 { font-size: 1.5em; }
@@ -138,14 +141,17 @@
 <body>
     <div id="sidebar">
         <button id="open-btn" title="Open file"><i class="fas fa-folder-open"></i></button>
+        <button id="new-btn" title="New file"><i class="fas fa-file"></i></button>
         <button id="edit-btn" title="Edit mode" style="display: none;"><i class="fas fa-edit"></i></button>
         <button id="save-btn" title="Save file" style="display: none;"><i class="fas fa-save"></i></button>
-        <button id="new-btn" title="New file" style="display: none;"><i class="fas fa-file"></i></button>
     </div>
     <div id="main-container">
         <div id="dropzone">
             <div id="dropzone-icon"><i class="fas fa-file-alt"></i></div>
             <div>Click or drop a markdown file here to open</div>
+            
+            <div class="dropzone-action-separator">- OR -</div>
+            <button id="create-new-btn-landing"><i class="fas fa-plus"></i> Create New File</button>
         </div>
         <div id="editor-container">
             <div id="editor-section">
@@ -197,6 +203,7 @@
         const editBtn = document.getElementById('edit-btn');
         const saveBtn = document.getElementById('save-btn');
         const newBtn = document.getElementById('new-btn');
+        const createNewBtnLanding = document.getElementById('create-new-btn-landing');
         const pwaBanner = document.getElementById('pwa-banner');
         const pwaInstallBtn = document.getElementById('pwa-install');
         const pwaCloseBtn = document.getElementById('pwa-close');
@@ -208,9 +215,9 @@
         let undoStack = [];
         let redoStack = [];
         let deferredPrompt = null;
-        let isScrollingProgrammatically = false; // 新增标志位，用于解决滚动抖动问题
+        let isScrollingProgrammatically = false;
 
-        // Function to dynamically load a script (kept as is, not directly related to reported issues)
+        // Function to dynamically load a script
         function loadScript(url, callback) {
             let script = document.createElement("script");
             script.type = "text/javascript";
@@ -222,7 +229,7 @@
 
             script.onerror = function() {
                 console.error('Failed to load script: ' + url);
-                callback(); // Still call callback to avoid blocking
+                callback();
             };
 
             document.head.appendChild(script);
@@ -255,7 +262,6 @@
                         </div>
                     </div>`;
             }  else {
-                // Use highlight.js if it's loaded, otherwise return plain code
                 if (typeof hljs !== 'undefined') {
                     try{
                       const highlighted = hljs.highlight(code, { language: language || 'plaintext', ignoreIllegals: true }).value;
@@ -267,7 +273,7 @@
 
                 } else {
                     console.error('highlight.js is not loaded!');
-                    return `<pre><code class="language-${language}">${code}</code></pre>`; // Fallback
+                    return `<pre><code class="language-${language}">${code}</code></pre>`; 
                 }
             }
         };
@@ -303,29 +309,23 @@
             pwaBanner.style.display = 'none';
         });
 
-        // Register service worker for PWA (改进注册逻辑)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const SW_VERSION = '1.0.0'; // 保持此版本号不变，除非有实际更新
-                const swUrl = `service-worker.js?v=${SW_VERSION}`; // 移除时间戳
+                const SW_VERSION = '1.0.1'; // Bump version
+                const swUrl = `service-worker.js?v=${SW_VERSION}`;
 
                 navigator.serviceWorker.register(swUrl, { scope: './' })
                     .then(reg => {
                         console.log('Service worker registered with scope:', reg.scope);
-
-                        // 监听 Service Worker 更新
                         reg.addEventListener('updatefound', () => {
                             const newWorker = reg.installing;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // 新内容已安装，可以提示用户刷新或直接激活
                                     console.log('New content available, activating...');
                                     newWorker.postMessage({ type: 'SKIP_WAITING' });
                                 }
                             });
                         });
-
-                        // 如果有等待中的 Service Worker，立即激活它
                         if (reg.waiting) {
                             console.log('Activating waiting service worker...');
                             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -340,10 +340,9 @@
             const html = marked.parse(text);
             preview.innerHTML = joypixels.shortnameToImage(html);
 
-            // Initialize Mermaid with security config
             if (typeof mermaid !== 'undefined') {
                 mermaid.initialize({
-                    startOnLoad: false, // Do not start on page load
+                    startOnLoad: false,
                     securityLevel: 'strict',
                     theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
                     flowchart: { useMaxWidth: true, htmlLabels: true },
@@ -351,31 +350,25 @@
                     sequence: { useMaxWidth: true, noteFontWeight: 'normal' }
                 });
 
-                // Manually initialize Mermaid diagrams
                 setTimeout(() => {
                     try {
                         mermaid.init(undefined, document.querySelectorAll('.mermaid'));
                     } catch (error) {
                         console.error('Mermaid initialization error:', error);
-                        // Handle Mermaid errors, possibly by displaying a message in the diagram container
                         document.querySelectorAll('.mermaid-container').forEach(container => {
                             container.innerHTML = '<div class="diagram-error">Failed to render Mermaid diagram.</div>';
                         });
                     }
-                }, 10); // Short delay
+                }, 10);
             } else {
                 console.error("Mermaid is not defined");
             }
 
-            // Render math with proper initialization
             setTimeout(() => {
                 renderMathInElement(preview, {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
                         { left: '$', right: '$', display: false },
-                        // 修复：KaTeX 的默认转义规则，通常不需要额外的反斜杠转义
-                        // { left: '\$', right: '\$', display: false },
-                        // { left: '\$$', right: '\\]', display: true }
                     ],
                     throwOnError: false,
                     ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
@@ -383,7 +376,6 @@
                 });
             }, 10);
 
-            // Apply syntax highlighting with highlight.js *after* the content is set
             if (typeof hljs !== 'undefined') {
                 preview.querySelectorAll('pre code').forEach((block) => {
                     hljs.highlightElement(block);
@@ -392,7 +384,6 @@
               console.error("hljs is undefined");
             }
 
-            // Add checkbox functionality to task lists
             const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
                 checkbox.disabled = false;
@@ -404,7 +395,6 @@
                     let lineIndex = -1;
 
                     for (let i = 0; i < lines.length; i++) {
-                        // 修复：修正任务列表复选框的正则表达式
                         if (lines[i].match(/^- \[[ x]\]/i)) {
                             currentListIndex++;
                             if (currentListIndex === listItemIndex) {
@@ -415,9 +405,9 @@
                     }
 
                     if (lineIndex !== -1) {
-                        saveToUndoStack(); // 勾选/取消勾选也应保存撤销状态
+                        saveToUndoStack();
                         lines[lineIndex] = lines[lineIndex].replace(
-                            /^- \[[ x]\]/i, // 修复：修正正则表达式
+                            /^- \[[ x]\]/i,
                             `- [${this.checked ? 'x' : ' '}]`
                         );
                         editor.value = lines.join('\n');
@@ -444,10 +434,10 @@
                 setViewMode();
                 editBtn.style.display = 'flex';
                 saveBtn.style.display = 'flex';
-                newBtn.style.display = 'flex';
+                // newBtn.style.display = 'flex'; // Removed because newBtn is now always visible
                 undoStack = [];
                 redoStack = [];
-                saveToUndoStack(); // 初始加载时保存一个状态
+                saveToUndoStack();
             };
             reader.readAsText(file);
         }
@@ -489,15 +479,23 @@
         }
 
         function newFile() {
-            if (editor.value && !confirm('Discard current document?')) return;
+            // Check if we are editing an existing document
+            if (fileLoaded && editor.value && !confirm('Discard current document?')) return;
+            
             currentFileName = '';
             editor.value = '';
             renderMarkdown('');
             fileLoaded = true;
             setEditMode();
+            
+            // Ensure toolbar buttons are visible
+            editBtn.style.display = 'flex';
+            saveBtn.style.display = 'flex';
+            // newBtn is always visible now
+
             undoStack = [];
             redoStack = [];
-            saveToUndoStack(); // 新建文件时保存一个状态
+            saveToUndoStack();
         }
 
         function saveToUndoStack() {
@@ -507,7 +505,7 @@
         }
 
         function undoAction() {
-            if (undoStack.length > 1) { // 至少需要两个状态才能撤销
+            if (undoStack.length > 1) {
                 redoStack.push(undoStack.pop());
                 const previousState = undoStack[undoStack.length - 1];
                 editor.value = previousState;
@@ -555,6 +553,12 @@
         dropzone.addEventListener('click', openFileDialog);
         openBtn.addEventListener('click', openFileDialog);
 
+        // Modified: Add listener for Create New Button in Dropzone
+        createNewBtnLanding.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent bubbling to dropzone which opens file dialog
+            newFile();
+        });
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropzone.addEventListener(eventName, function(e) {
                 e.preventDefault();
@@ -581,16 +585,15 @@
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
 
-        // 修复：滚动同步抖动问题
         editor.addEventListener('scroll', function() {
             if (editMode) {
                 if (isScrollingProgrammatically) {
-                    isScrollingProgrammatically = false; // 重置标志位
-                    return; // 跳过由程序引起的滚动事件
+                    isScrollingProgrammatically = false;
+                    return;
                 }
                 const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
                 const previewScrollPosition = editorScrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
-                isScrollingProgrammatically = true; // 在设置 scrollTop 前设置标志位
+                isScrollingProgrammatically = true;
                 previewContainer.scrollTop = previewScrollPosition;
             }
         });
@@ -598,19 +601,18 @@
         previewContainer.addEventListener('scroll', function() {
             if (editMode) {
                 if (isScrollingProgrammatically) {
-                    isScrollingProgrammatically = false; // 重置标志位
-                    return; // 跳过由程序引起的滚动事件
+                    isScrollingProgrammatically = false;
+                    return;
                 }
                 const previewScrollPercentage = previewContainer.scrollTop / (previewContainer.scrollHeight - previewContainer.clientHeight);
                 const editorScrollPosition = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
-                isScrollingProgrammatically = true; // 在设置 scrollTop 前设置标志位
+                isScrollingProgrammatically = true;
                 editor.scrollTop = editorScrollPosition;
             }
         });
 
-        // 修复：对 input 事件进行防抖处理
         let debounceTimeout;
-        const DEBOUNCE_DELAY = 300; // 300毫秒的防抖延迟
+        const DEBOUNCE_DELAY = 300;
 
         editor.addEventListener('input', function() {
             clearTimeout(debounceTimeout);
@@ -668,7 +670,7 @@
             const end = info.end;
             const newText = prefix + selection + suffix;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + newText.length; // 将光标移到新文本的末尾
+            editor.selectionStart = start + newText.length;
             editor.selectionEnd = start + newText.length;
             editor.focus();
             renderMarkdown(editor.value);
@@ -680,7 +682,7 @@
             const selection = info.selection;
             const start = info.start;
             const end = info.end;
-            let cleanText = selection.replace(/^#+\s*/, ''); // 移除已有的标题符号
+            let cleanText = selection.replace(/^#+\s*/, '');
             const prefix = '#'.repeat(level) + ' ';
             const newText = prefix + cleanText;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
@@ -698,7 +700,7 @@
             let linkText = selection || 'link text';
             let newText = `[${linkText}](https://)`;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + linkText.length + 3; // 将光标放在 URL 部分
+            editor.selectionStart = start + linkText.length + 3;
             editor.selectionEnd = start + newText.length - 1;
             editor.focus();
             renderMarkdown(editor.value);
@@ -712,7 +714,7 @@
             let altText = selection || 'alt text';
             let newText = `![${altText}](image-url)`;
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + altText.length + 4; // 将光标放在 URL 部分
+            editor.selectionStart = start + altText.length + 4;
             editor.selectionEnd = start + newText.length - 1;
             editor.focus();
             renderMarkdown(editor.value);
@@ -740,7 +742,7 @@
             const end = info.end;
             const newText = '```\n' + selection + '\n```';
             editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-            editor.selectionStart = start + 4; // 将光标放在代码块内部
+            editor.selectionStart = start + 4;
             editor.selectionEnd = start + 4 + selection.length;
             editor.focus();
             renderMarkdown(editor.value);
@@ -771,7 +773,6 @@
             renderMarkdown(editor.value);
         }
 
-        // Utility function to download SVG - Corrected and Repositioned
         function downloadSVG(container, type) {
             if (type === 'plantuml') {
                 const img = container.querySelector('img');
@@ -783,29 +784,20 @@
                 a.download = filename;
                 a.click();
             } else if (type === 'mermaid') {
-                // For Mermaid, we need to get the SVG content and create a blob
-                const svgElement = container.querySelector('svg'); // Directly select the SVG element
+                const svgElement = container.querySelector('svg');
                 if (!svgElement) {
                     console.error('SVG element not found in Mermaid container.');
                     return;
                 }
-
-                // Serialize the SVG to a string
                 const serializer = new XMLSerializer();
                 const svgString = serializer.serializeToString(svgElement);
-
-                // Create a Blob from the SVG string
                 const blob = new Blob([svgString], { type: 'image/svg+xml' });
                 const url = URL.createObjectURL(blob);
-
-                // Create a download link and trigger the download
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = 'mermaid-diagram.svg';
-                document.body.appendChild(a); // Append the link to the body
+                document.body.appendChild(a);
                 a.click();
-
-                // Clean up: remove the link and revoke the Blob URL
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
@@ -814,12 +806,11 @@
         function zoomDiagram(container){
             const img = container.querySelector('img');
             if (!img) return;
-            // 获取当前缩放值，如果未设置则默认为1
             const currentScale = container.style.transform ? parseFloat(container.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            const newScale = currentScale * 1.2; // 增加缩放
+            const newScale = currentScale * 1.2;
             container.style.transform = `scale(${newScale})`;
-            container.style.transformOrigin = 'top left'; // 设置缩放原点，防止元素移出视线
-            container.style.overflow = 'auto'; // 确保需要时出现滚动条
+            container.style.transformOrigin = 'top left';
+            container.style.overflow = 'auto';
         }
 
     </script>
