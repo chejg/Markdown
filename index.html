@@ -73,7 +73,13 @@
             contain-intrinsic-size: 1000px; 
         }
 
-        #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; }
+        #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; transition: max-width 0.3s ease; }
+        
+        /* 宽屏模式 */
+        .wide-mode #preview {
+            max-width: 100%;
+            padding: 20px 40px;
+        }
         
         /* Preview Styles */
         #preview h1, #preview h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
@@ -371,15 +377,70 @@
         
         /* Print styles */
         @media print {
-          #sidebar, #toolbar, .diagram-toolbar, #word-count, #outline-panel, #search-panel, #pwa-banner {
+          /* 隐藏不需要打印的元素 */
+          #sidebar, #toolbar, .diagram-toolbar, #word-count, 
+          #outline-panel, #search-panel, #pwa-banner, #dropzone {
             display: none !important;
           }
-          #preview-container {
-            width: 100% !important;
+          
+          /* 重置 body 布局 */
+          body {
+            display: block !important;
+            height: auto !important;
             overflow: visible !important;
           }
+          
+          #main-container {
+            display: block !important;
+            overflow: visible !important;
+          }
+          
           #editor-section {
             display: none !important;
+          }
+          
+          #editor-container {
+            display: block !important;
+          }
+          
+          /* 关键修复: 重置 preview-container 的限制 */
+          #preview-container {
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            content-visibility: visible !important;
+            contain-intrinsic-size: auto !important;
+            contain: none !important;
+          }
+          
+          #preview {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          /* 确保图片和图表不被截断 */
+          #preview img, 
+          #preview svg,
+          .diagram-container,
+          .mermaid-container,
+          .mermaid {
+            max-width: 100% !important;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          
+          /* 避免标题和内容分离 */
+          #preview h1, #preview h2, #preview h3, 
+          #preview h4, #preview h5, #preview h6 {
+            page-break-after: avoid;
+            break-after: avoid;
+          }
+          
+          /* 避免表格和代码块被截断 */
+          #preview table, #preview pre, #preview blockquote {
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
         }
         
@@ -403,6 +464,7 @@
         <button id="search-btn" title="Search & Replace" style="display: none;"><i class="fas fa-search"></i></button>
         <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
         <button id="print-btn" title="Print/Export PDF" style="display: none;"><i class="fas fa-print"></i></button>
+        <button id="wide-mode-btn" title="Toggle Wide Mode" style="display: none;"><i class="fas fa-arrows-alt-h"></i></button>
         <button id="export-md-btn" title="Export as HTML" style="display: none;"><i class="fas fa-file-export"></i></button>
     </div>
     <div id="main-container">
@@ -508,6 +570,7 @@
         const searchInfo = document.getElementById('search-info');
         const themeBtn = document.getElementById('theme-btn');
         const printBtn = document.getElementById('print-btn');
+        const wideModeBtn = document.getElementById('wide-mode-btn');
         const exportMdBtn = document.getElementById('export-md-btn');
         const wordCountEl = document.getElementById('word-count');
         const toastEl = document.getElementById('toast');
@@ -522,11 +585,18 @@
         let searchMatches = [];
         let currentMatchIndex = -1;
         let isDarkTheme = localStorage.getItem('darkTheme') === 'true';
+        let isWideMode = localStorage.getItem('wideMode') === 'true';
         
         // Apply saved theme
         if (isDarkTheme) {
             document.documentElement.classList.add('dark-theme');
             themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        // Apply saved wide mode
+        if (isWideMode) {
+            previewContainer.classList.add('wide-mode');
+            wideModeBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i>';
         }
 
         // --- Helper Function: Escape HTML ---
@@ -755,6 +825,7 @@
                 outlineBtn.style.display = 'flex';
                 searchBtn.style.display = 'flex';
                 printBtn.style.display = 'flex';
+                wideModeBtn.style.display = 'flex';
                 exportMdBtn.style.display = 'flex';
                 wordCountEl.style.display = 'block';
                 undoStack = [];
@@ -817,6 +888,7 @@
             outlineBtn.style.display = 'flex';
             searchBtn.style.display = 'flex';
             printBtn.style.display = 'flex';
+            wideModeBtn.style.display = 'flex';
             exportMdBtn.style.display = 'flex';
             wordCountEl.style.display = 'block';
             undoStack = [];
@@ -909,6 +981,7 @@
         searchBtn.addEventListener('click', toggleSearch);
         themeBtn.addEventListener('click', toggleTheme);
         printBtn.addEventListener('click', printDocument);
+        wideModeBtn.addEventListener('click', toggleWideMode);
         exportMdBtn.addEventListener('click', exportAsHTML);
         
         // Search input events
@@ -1524,7 +1597,57 @@
         
         // Print function
         function printDocument() {
-            window.print();
+            showToast('Preparing for print...');
+            
+            // 强制触发所有内容渲染
+            const originalContentVisibility = previewContainer.style.contentVisibility;
+            previewContainer.style.contentVisibility = 'visible';
+            
+            // 确保 Mermaid 图表已完全渲染
+            const mermaidElements = document.querySelectorAll('.mermaid:not([data-processed])');
+            if (mermaidElements.length > 0 && typeof mermaid !== 'undefined') {
+                try {
+                    mermaid.init(undefined, mermaidElements);
+                } catch (e) {
+                    console.warn('Mermaid render warning:', e);
+                }
+            }
+            
+            // 确保 KaTeX 公式已渲染
+            if (window.renderMathInElement) {
+                try {
+                    renderMathInElement(preview, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false },
+                        ],
+                        throwOnError: false
+                    });
+                } catch (e) {
+                    console.warn('KaTeX render warning:', e);
+                }
+            }
+            
+            // 延迟打印以确保所有异步内容已加载
+            setTimeout(() => {
+                window.print();
+                // 打印后恢复性能优化
+                setTimeout(() => {
+                    previewContainer.style.contentVisibility = originalContentVisibility;
+                }, 100);
+            }, 500);
+        }
+        
+        // Toggle wide mode
+        function toggleWideMode() {
+            isWideMode = !isWideMode;
+            previewContainer.classList.toggle('wide-mode');
+            localStorage.setItem('wideMode', isWideMode);
+            wideModeBtn.innerHTML = isWideMode 
+                ? '<i class="fas fa-compress-arrows-alt"></i>' 
+                : '<i class="fas fa-arrows-alt-h"></i>';
+            wideModeBtn.title = isWideMode ? 'Normal Width' : 'Wide Mode';
+            showToast(isWideMode ? 'Wide mode enabled' : 'Normal width mode');
         }
         
         // Export as HTML
