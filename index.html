@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Editor (Fixed)</title>
+    <title>Markdown Editor Pro</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e3e3e3">
@@ -22,6 +22,8 @@
     <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@9.1.7/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/emoji-toolkit@6.6.0/lib/js/joypixels.min.js"></script>
+    <!-- html2canvas for PNG export -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -137,6 +139,250 @@
         .diagram-toolbar button:hover {
           background: var(--button-hover);
         }
+        
+        /* Enhanced diagram export dropdown */
+        .diagram-export-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+        .diagram-export-dropdown .dropdown-content {
+          display: none;
+          position: absolute;
+          right: 0;
+          background-color: white;
+          min-width: 120px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          border-radius: 4px;
+          z-index: 200;
+          overflow: hidden;
+        }
+        .diagram-export-dropdown:hover .dropdown-content {
+          display: block;
+        }
+        .dropdown-content button {
+          width: 100%;
+          padding: 8px 12px !important;
+          text-align: left;
+          border: none !important;
+          border-radius: 0 !important;
+          background: white !important;
+        }
+        .dropdown-content button:hover {
+          background: var(--button-hover) !important;
+        }
+        
+        /* Preview editable styles */
+        .preview-editable {
+          cursor: text;
+        }
+        .preview-editable:hover {
+          outline: 2px dashed #007bff;
+          outline-offset: 2px;
+        }
+        .preview-editable:focus {
+          outline: 2px solid #007bff;
+          outline-offset: 2px;
+        }
+        .inline-edit-input {
+          width: 100%;
+          padding: 4px 8px;
+          border: 2px solid #007bff;
+          border-radius: 4px;
+          font-family: inherit;
+          font-size: inherit;
+          background: #fff;
+        }
+        .inline-edit-textarea {
+          width: 100%;
+          min-height: 100px;
+          padding: 8px;
+          border: 2px solid #007bff;
+          border-radius: 4px;
+          font-family: inherit;
+          font-size: inherit;
+          resize: vertical;
+          background: #fff;
+        }
+        
+        /* Toast notification */
+        .toast {
+          position: fixed;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #333;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          z-index: 10000;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          font-size: 14px;
+        }
+        .toast.show {
+          opacity: 1;
+        }
+        
+        /* Word count panel */
+        #word-count {
+          position: fixed;
+          bottom: 10px;
+          right: 10px;
+          background: rgba(0,0,0,0.7);
+          color: white;
+          padding: 5px 12px;
+          border-radius: 15px;
+          font-size: 12px;
+          z-index: 100;
+          display: none;
+        }
+        
+        /* Outline/TOC panel */
+        #outline-panel {
+          position: fixed;
+          right: 0;
+          top: 0;
+          width: 250px;
+          height: 100vh;
+          background: white;
+          border-left: 1px solid var(--border-color);
+          z-index: 500;
+          overflow-y: auto;
+          transform: translateX(100%);
+          transition: transform 0.3s ease;
+          padding: 15px;
+        }
+        #outline-panel.show {
+          transform: translateX(0);
+        }
+        #outline-panel h3 {
+          margin: 0 0 15px 0;
+          font-size: 14px;
+          color: #666;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        #outline-panel .close-outline {
+          cursor: pointer;
+          padding: 5px;
+          border: none;
+          background: none;
+          font-size: 16px;
+        }
+        #outline-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        #outline-list li {
+          padding: 5px 0;
+          cursor: pointer;
+          color: var(--link-color);
+          font-size: 13px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        #outline-list li:hover {
+          background: #f8f9fa;
+        }
+        #outline-list li.level-1 { padding-left: 0; font-weight: bold; }
+        #outline-list li.level-2 { padding-left: 15px; }
+        #outline-list li.level-3 { padding-left: 30px; }
+        #outline-list li.level-4 { padding-left: 45px; }
+        #outline-list li.level-5 { padding-left: 60px; }
+        #outline-list li.level-6 { padding-left: 75px; }
+        
+        /* Search and Replace panel */
+        #search-panel {
+          position: fixed;
+          top: 50px;
+          right: 60px;
+          background: white;
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 15px;
+          z-index: 600;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          display: none;
+          width: 300px;
+        }
+        #search-panel input {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 8px;
+          font-size: 14px;
+        }
+        #search-panel .search-buttons {
+          display: flex;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        #search-panel button {
+          flex: 1;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          background: white;
+          cursor: pointer;
+          font-size: 13px;
+        }
+        #search-panel button:hover {
+          background: var(--button-hover);
+        }
+        #search-panel .search-info {
+          font-size: 12px;
+          color: #666;
+          margin-top: 8px;
+        }
+        
+        /* Theme switcher */
+        .dark-theme {
+          --sidebar-bg: #1e1e1e;
+          --toolbar-bg: #2d2d2d;
+          --editor-bg: #1e1e1e;
+          --border-color: #404040;
+          --text-color: #d4d4d4;
+          --link-color: #4fc3f7;
+          --blockquote-color: #9e9e9e;
+          --code-bg: rgba(255,255,255,0.1);
+          --table-border: #404040;
+          --table-alt-bg: #2d2d2d;
+          --button-hover: #404040;
+        }
+        .dark-theme body, .dark-theme #preview-container, .dark-theme #preview {
+          background-color: #1e1e1e;
+          color: #d4d4d4;
+        }
+        .dark-theme #editor {
+          background-color: #1e1e1e;
+          color: #d4d4d4;
+        }
+        .dark-theme #outline-panel, .dark-theme #search-panel {
+          background: #2d2d2d;
+          color: #d4d4d4;
+        }
+        .dark-theme #search-panel input {
+          background: #1e1e1e;
+          color: #d4d4d4;
+          border-color: #404040;
+        }
+        
+        /* Print styles */
+        @media print {
+          #sidebar, #toolbar, .diagram-toolbar, #word-count, #outline-panel, #search-panel, #pwa-banner {
+            display: none !important;
+          }
+          #preview-container {
+            width: 100% !important;
+            overflow: visible !important;
+          }
+          #editor-section {
+            display: none !important;
+          }
+        }
+        
         #pwa-banner { position: fixed; bottom: 0; left: 0; right: 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; padding: 10px 20px; display: none; align-items: center; justify-content: space-between; z-index: 1000; }
         #pwa-banner button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         #pwa-close { background: none !important; border: none !important; font-size: 20px; cursor: pointer; padding: 0 10px; }
@@ -153,6 +399,11 @@
         <button id="new-btn" title="New file"><i class="fas fa-file"></i></button>
         <button id="edit-btn" title="Edit mode" style="display: none;"><i class="fas fa-edit"></i></button>
         <button id="save-btn" title="Save file" style="display: none;"><i class="fas fa-save"></i></button>
+        <button id="outline-btn" title="Toggle Outline" style="display: none;"><i class="fas fa-list-alt"></i></button>
+        <button id="search-btn" title="Search & Replace" style="display: none;"><i class="fas fa-search"></i></button>
+        <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+        <button id="print-btn" title="Print/Export PDF" style="display: none;"><i class="fas fa-print"></i></button>
+        <button id="export-md-btn" title="Export as HTML" style="display: none;"><i class="fas fa-file-export"></i></button>
     </div>
     <div id="main-container">
         <div id="dropzone">
@@ -181,7 +432,12 @@
                     <button title="Task List" onclick="insertList('- [ ] ')"><i class="fas fa-check-square"></i></button>
                     <button title="Horizontal Rule" onclick="insertText('---\n')"><i class="fas fa-minus"></i></button>
                     <button title="Table" onclick="insertTable()"><i class="fas fa-table"></i></button>
+                    <button title="Insert Mermaid Diagram" onclick="insertMermaid()"><i class="fas fa-project-diagram"></i></button>
+                    <button title="Insert PlantUML Diagram" onclick="insertPlantUML()"><i class="fas fa-sitemap"></i></button>
+                    <button title="Insert Math Formula" onclick="insertMath()"><i class="fas fa-square-root-alt"></i></button>
+                    <button title="Insert Footnote" onclick="insertFootnote()"><i class="fas fa-superscript"></i></button>
                     <button title="Undo" onclick="undoAction()"><i class="fas fa-undo"></i></button>
+                    <button title="Redo" onclick="redoAction()"><i class="fas fa-redo"></i></button>
                     <button title="Fullscreen" onclick="toggleFullscreen()" id="fullscreen-btn"><i class="fas fa-expand"></i></button>
                 </div>
                 <textarea id="editor" spellcheck="false"></textarea>
@@ -191,6 +447,31 @@
             </div>
         </div>
     </div>
+    
+    <!-- Outline Panel -->
+    <div id="outline-panel">
+        <h3>Document Outline <button class="close-outline" onclick="toggleOutline()"><i class="fas fa-times"></i></button></h3>
+        <ul id="outline-list"></ul>
+    </div>
+    
+    <!-- Search & Replace Panel -->
+    <div id="search-panel">
+        <input type="text" id="search-input" placeholder="Search...">
+        <input type="text" id="replace-input" placeholder="Replace with...">
+        <div class="search-buttons">
+            <button onclick="findNext()"><i class="fas fa-chevron-down"></i> Next</button>
+            <button onclick="findPrev()"><i class="fas fa-chevron-up"></i> Prev</button>
+            <button onclick="replaceOne()">Replace</button>
+            <button onclick="replaceAll()">All</button>
+        </div>
+        <div class="search-info" id="search-info"></div>
+    </div>
+    
+    <!-- Word Count -->
+    <div id="word-count"></div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
     <div id="pwa-banner">
         <div>Install this app on your device for easier access</div>
@@ -217,6 +498,19 @@
         const pwaInstallBtn = document.getElementById('pwa-install');
         const pwaCloseBtn = document.getElementById('pwa-close');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const outlineBtn = document.getElementById('outline-btn');
+        const outlinePanel = document.getElementById('outline-panel');
+        const outlineList = document.getElementById('outline-list');
+        const searchBtn = document.getElementById('search-btn');
+        const searchPanel = document.getElementById('search-panel');
+        const searchInput = document.getElementById('search-input');
+        const replaceInput = document.getElementById('replace-input');
+        const searchInfo = document.getElementById('search-info');
+        const themeBtn = document.getElementById('theme-btn');
+        const printBtn = document.getElementById('print-btn');
+        const exportMdBtn = document.getElementById('export-md-btn');
+        const wordCountEl = document.getElementById('word-count');
+        const toastEl = document.getElementById('toast');
 
         let currentFileName = '';
         let editMode = false;
@@ -225,6 +519,15 @@
         let redoStack = [];
         let deferredPrompt = null;
         let isScrollingProgrammatically = false;
+        let searchMatches = [];
+        let currentMatchIndex = -1;
+        let isDarkTheme = localStorage.getItem('darkTheme') === 'true';
+        
+        // Apply saved theme
+        if (isDarkTheme) {
+            document.documentElement.classList.add('dark-theme');
+            themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        }
 
         // --- Helper Function: Escape HTML ---
         function escapeHtml(unsafe) {
@@ -243,23 +546,44 @@
                 const encoded = plantumlEncoder.encode(code);
                 const server = window.plantumlServer || 'https://www.plantuml.com/plantuml';
                 const url = `${server}/svg/${encoded}`;
+                const pngUrl = `${server}/png/${encoded}`;
                 return `
-                    <div class="diagram-container" data-plantuml="${encoded}">
+                    <div class="diagram-container" data-plantuml="${encoded}" data-code="${escapeHtml(code)}">
                         <div class="diagram-loading">Rendering PlantUML...</div>
                         <img src="${url}" alt="PlantUML Diagram" loading="lazy"
                              onload="this.parentElement.querySelector('.diagram-loading').style.display='none'"
-                             onerror="this.parentElement.innerHTML='<div class=\'diagram-error\'>Failed to render PlantUML diagram</div>'">
+                             onerror="this.parentElement.innerHTML='<div class=\\'diagram-error\\'>Failed to render PlantUML diagram</div>'">
                         <div class="diagram-toolbar">
-                            <button onclick="downloadSVG(this.parentElement.parentElement, 'plantuml')">↓ SVG</button>
-                            <button onclick="zoomDiagram(this.parentElement.parentElement)">🔍</button>
+                            <div class="diagram-export-dropdown">
+                                <button><i class="fas fa-download"></i> Export ▼</button>
+                                <div class="dropdown-content">
+                                    <button onclick="downloadSVG(this.closest('.diagram-container'), 'plantuml')"><i class="fas fa-file-code"></i> SVG</button>
+                                    <button onclick="downloadPNG(this.closest('.diagram-container'), 'plantuml')"><i class="fas fa-file-image"></i> PNG</button>
+                                    <button onclick="copyDiagramCode(this.closest('.diagram-container'))"><i class="fas fa-copy"></i> Copy Code</button>
+                                </div>
+                            </div>
+                            <button onclick="zoomDiagram(this.closest('.diagram-container'), 1.2)" title="Zoom In"><i class="fas fa-search-plus"></i></button>
+                            <button onclick="zoomDiagram(this.closest('.diagram-container'), 0.8)" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
+                            <button onclick="resetZoom(this.closest('.diagram-container'))" title="Reset Zoom"><i class="fas fa-undo"></i></button>
                         </div>
                     </div>`;
             } else if (language === 'mermaid') {
+                const escapedCode = escapeHtml(code);
               return `
-                    <div class="mermaid-container">
+                    <div class="mermaid-container" data-code="${escapedCode}">
                         <div class="mermaid">${code}</div>
                         <div class="diagram-toolbar">
-                            <button onclick="downloadSVG(this.parentElement, 'mermaid')">↓ SVG</button>
+                            <div class="diagram-export-dropdown">
+                                <button><i class="fas fa-download"></i> Export ▼</button>
+                                <div class="dropdown-content">
+                                    <button onclick="downloadSVG(this.closest('.mermaid-container'), 'mermaid')"><i class="fas fa-file-code"></i> SVG</button>
+                                    <button onclick="downloadPNG(this.closest('.mermaid-container'), 'mermaid')"><i class="fas fa-file-image"></i> PNG</button>
+                                    <button onclick="copyDiagramCode(this.closest('.mermaid-container'))"><i class="fas fa-copy"></i> Copy Code</button>
+                                </div>
+                            </div>
+                            <button onclick="zoomDiagram(this.closest('.mermaid-container'), 1.2)" title="Zoom In"><i class="fas fa-search-plus"></i></button>
+                            <button onclick="zoomDiagram(this.closest('.mermaid-container'), 0.8)" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
+                            <button onclick="resetZoom(this.closest('.mermaid-container'))" title="Reset Zoom"><i class="fas fa-undo"></i></button>
                         </div>
                     </div>`;
             }  else {
@@ -367,6 +691,17 @@
                 checkbox.disabled = false;
                 checkbox.addEventListener('change', handleTaskCheckbox);
             });
+            
+            // Update outline
+            updateOutline();
+            
+            // Update word count
+            updateWordCount();
+            
+            // Make preview elements editable in view mode
+            if (!editMode) {
+                makePreviewEditable();
+            }
         }
 
         function handleTaskCheckbox() {
@@ -417,6 +752,11 @@
 
                 editBtn.style.display = 'flex';
                 saveBtn.style.display = 'flex';
+                outlineBtn.style.display = 'flex';
+                searchBtn.style.display = 'flex';
+                printBtn.style.display = 'flex';
+                exportMdBtn.style.display = 'flex';
+                wordCountEl.style.display = 'block';
                 undoStack = [];
                 redoStack = [];
                 saveToUndoStack();
@@ -474,6 +814,11 @@
 
             editBtn.style.display = 'flex';
             saveBtn.style.display = 'flex';
+            outlineBtn.style.display = 'flex';
+            searchBtn.style.display = 'flex';
+            printBtn.style.display = 'flex';
+            exportMdBtn.style.display = 'flex';
+            wordCountEl.style.display = 'block';
             undoStack = [];
             redoStack = [];
             saveToUndoStack();
@@ -560,6 +905,27 @@
 
         saveBtn.addEventListener('click', saveFile);
         newBtn.addEventListener('click', newFile);
+        outlineBtn.addEventListener('click', toggleOutline);
+        searchBtn.addEventListener('click', toggleSearch);
+        themeBtn.addEventListener('click', toggleTheme);
+        printBtn.addEventListener('click', printDocument);
+        exportMdBtn.addEventListener('click', exportAsHTML);
+        
+        // Search input events
+        searchInput.addEventListener('input', function() {
+            findMatches(this.value);
+        });
+        
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) findPrev();
+                else findNext();
+            }
+            if (e.key === 'Escape') {
+                searchPanel.style.display = 'none';
+            }
+        });
 
         let syncScrollPending = false;
         editor.addEventListener('scroll', function() {
@@ -616,7 +982,19 @@
                 e.preventDefault();
                 if (fileLoaded) editMode ? setViewMode() : setEditMode();
             }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                if (fileLoaded) toggleSearch();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                if (fileLoaded) printDocument();
+            }
             if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
+            if (e.key === 'Escape') {
+                searchPanel.style.display = 'none';
+                outlinePanel.classList.remove('show');
+            }
         });
 
         function getSelectionOrLineInfo() {
@@ -755,13 +1133,18 @@
                 if (!img) return;
                 const a = document.createElement('a');
                 a.href = img.src;
-                a.download = 'diagram.svg';
+                a.download = 'plantuml-diagram.svg';
                 a.click();
+                showToast('SVG diagram downloaded!');
             } else if (type === 'mermaid') {
                 const svgElement = container.querySelector('svg');
                 if (!svgElement) return;
                 const serializer = new XMLSerializer();
-                const svgString = serializer.serializeToString(svgElement);
+                let svgString = serializer.serializeToString(svgElement);
+                // Add XML declaration and proper namespace
+                if (!svgString.includes('xmlns')) {
+                    svgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                }
                 const blob = new Blob([svgString], { type: 'image/svg+xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -771,17 +1154,453 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                showToast('SVG diagram downloaded!');
             }
         }
         
-        function zoomDiagram(container){
-            const img = container.querySelector('img');
-            if (!img) return;
-            const currentScale = container.style.transform ? parseFloat(container.style.transform.replace('scale(', '').replace(')', '')) : 1;
-            const newScale = currentScale * 1.2;
-            container.style.transform = `scale(${newScale})`;
-            container.style.transformOrigin = 'top left';
-            container.style.overflow = 'auto';
+        async function downloadPNG(container, type) {
+            showToast('Generating PNG...');
+            
+            if (type === 'plantuml') {
+                // For PlantUML, get PNG from server
+                const encoded = container.dataset.plantuml;
+                const server = window.plantumlServer || 'https://www.plantuml.com/plantuml';
+                const pngUrl = `${server}/png/${encoded}`;
+                
+                try {
+                    const response = await fetch(pngUrl);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'plantuml-diagram.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('PNG diagram downloaded!');
+                } catch (error) {
+                    // Fallback: open in new tab
+                    window.open(pngUrl, '_blank');
+                    showToast('PNG opened in new tab');
+                }
+            } else if (type === 'mermaid') {
+                // For Mermaid, convert SVG to PNG using canvas
+                const svgElement = container.querySelector('svg');
+                if (!svgElement) {
+                    showToast('No SVG found to export');
+                    return;
+                }
+                
+                try {
+                    // Use html2canvas if available
+                    if (typeof html2canvas !== 'undefined') {
+                        const canvas = await html2canvas(container.querySelector('.mermaid'), {
+                            backgroundColor: '#ffffff',
+                            scale: 2
+                        });
+                        
+                        canvas.toBlob(function(blob) {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'mermaid-diagram.png';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            showToast('PNG diagram downloaded!');
+                        }, 'image/png');
+                    } else {
+                        // Fallback: SVG to PNG conversion
+                        const serializer = new XMLSerializer();
+                        let svgString = serializer.serializeToString(svgElement);
+                        
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        
+                        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(svgBlob);
+                        
+                        img.onload = function() {
+                            canvas.width = img.width * 2;
+                            canvas.height = img.height * 2;
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            
+                            canvas.toBlob(function(blob) {
+                                const pngUrl = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = pngUrl;
+                                a.download = 'mermaid-diagram.png';
+                                a.click();
+                                URL.revokeObjectURL(pngUrl);
+                                showToast('PNG diagram downloaded!');
+                            }, 'image/png');
+                            
+                            URL.revokeObjectURL(url);
+                        };
+                        
+                        img.src = url;
+                    }
+                } catch (error) {
+                    console.error('PNG export error:', error);
+                    showToast('Failed to export PNG');
+                }
+            }
+        }
+        
+        function copyDiagramCode(container) {
+            const code = container.dataset.code;
+            if (code) {
+                // Decode HTML entities
+                const textarea = document.createElement('textarea');
+                textarea.innerHTML = code;
+                const decodedCode = textarea.value;
+                
+                navigator.clipboard.writeText(decodedCode).then(() => {
+                    showToast('Diagram code copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    showToast('Failed to copy code');
+                });
+            }
+        }
+        
+        function zoomDiagram(container, factor) {
+            const currentScale = parseFloat(container.dataset.scale || '1');
+            const newScale = Math.max(0.25, Math.min(4, currentScale * factor));
+            container.dataset.scale = newScale;
+            
+            const content = container.querySelector('img, svg, .mermaid');
+            if (content) {
+                content.style.transform = `scale(${newScale})`;
+                content.style.transformOrigin = 'top left';
+            }
+        }
+        
+        function resetZoom(container) {
+            container.dataset.scale = '1';
+            const content = container.querySelector('img, svg, .mermaid');
+            if (content) {
+                content.style.transform = 'scale(1)';
+            }
+        }
+        
+        // Toast notification
+        function showToast(message, duration = 2000) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, duration);
+        }
+        
+        // Make preview elements editable (for view mode)
+        function makePreviewEditable() {
+            const editableElements = preview.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th');
+            
+            editableElements.forEach((el, index) => {
+                el.classList.add('preview-editable');
+                el.dataset.editIndex = index;
+                
+                el.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    startInlineEdit(this);
+                });
+            });
+        }
+        
+        function startInlineEdit(element) {
+            if (element.querySelector('.inline-edit-input, .inline-edit-textarea')) return;
+            
+            const originalText = element.textContent;
+            const tagName = element.tagName.toLowerCase();
+            const isMultiline = tagName === 'blockquote' || originalText.length > 100;
+            
+            element.dataset.originalHtml = element.innerHTML;
+            
+            if (isMultiline) {
+                element.innerHTML = `<textarea class="inline-edit-textarea">${originalText}</textarea>`;
+            } else {
+                element.innerHTML = `<input type="text" class="inline-edit-input" value="${originalText.replace(/"/g, '&quot;')}">`;
+            }
+            
+            const input = element.querySelector('input, textarea');
+            input.focus();
+            input.select();
+            
+            input.addEventListener('blur', function() {
+                finishInlineEdit(element, this.value, originalText);
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !isMultiline) {
+                    e.preventDefault();
+                    this.blur();
+                }
+                if (e.key === 'Escape') {
+                    element.innerHTML = element.dataset.originalHtml;
+                }
+                if (e.key === 'Enter' && e.ctrlKey && isMultiline) {
+                    e.preventDefault();
+                    this.blur();
+                }
+            });
+        }
+        
+        function finishInlineEdit(element, newText, originalText) {
+            if (newText === originalText) {
+                element.innerHTML = element.dataset.originalHtml;
+                return;
+            }
+            
+            // Find and replace in editor
+            const lines = editor.value.split('\n');
+            let found = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                // Simple text match - look for the original text in the line
+                if (lines[i].includes(originalText)) {
+                    lines[i] = lines[i].replace(originalText, newText);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (found) {
+                saveToUndoStack();
+                editor.value = lines.join('\n');
+                renderMarkdown(editor.value);
+                showToast('Content updated!');
+            } else {
+                element.innerHTML = element.dataset.originalHtml;
+                showToast('Could not find text to update');
+            }
+        }
+        
+        // Outline/TOC functions
+        function toggleOutline() {
+            outlinePanel.classList.toggle('show');
+        }
+        
+        function updateOutline() {
+            const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            outlineList.innerHTML = '';
+            
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName.charAt(1));
+                const li = document.createElement('li');
+                li.className = `level-${level}`;
+                li.textContent = heading.textContent;
+                li.addEventListener('click', () => {
+                    heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                outlineList.appendChild(li);
+            });
+        }
+        
+        // Search and Replace functions
+        function toggleSearch() {
+            searchPanel.style.display = searchPanel.style.display === 'none' ? 'block' : 'none';
+            if (searchPanel.style.display === 'block') {
+                searchInput.focus();
+            }
+        }
+        
+        function findMatches(searchText) {
+            if (!searchText) {
+                searchMatches = [];
+                searchInfo.textContent = '';
+                return;
+            }
+            
+            const content = editor.value;
+            searchMatches = [];
+            let match;
+            const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            
+            while ((match = regex.exec(content)) !== null) {
+                searchMatches.push({ start: match.index, end: match.index + match[0].length });
+            }
+            
+            searchInfo.textContent = searchMatches.length > 0 
+                ? `Found ${searchMatches.length} match(es)` 
+                : 'No matches found';
+            
+            currentMatchIndex = searchMatches.length > 0 ? 0 : -1;
+        }
+        
+        function findNext() {
+            const searchText = searchInput.value;
+            if (!searchText) return;
+            
+            findMatches(searchText);
+            
+            if (searchMatches.length === 0) return;
+            
+            currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+            highlightMatch();
+        }
+        
+        function findPrev() {
+            const searchText = searchInput.value;
+            if (!searchText) return;
+            
+            findMatches(searchText);
+            
+            if (searchMatches.length === 0) return;
+            
+            currentMatchIndex = currentMatchIndex <= 0 ? searchMatches.length - 1 : currentMatchIndex - 1;
+            highlightMatch();
+        }
+        
+        function highlightMatch() {
+            if (currentMatchIndex < 0 || currentMatchIndex >= searchMatches.length) return;
+            
+            const match = searchMatches[currentMatchIndex];
+            editor.focus();
+            editor.setSelectionRange(match.start, match.end);
+            
+            // Scroll to selection
+            const lineHeight = 20;
+            const linesBeforeMatch = editor.value.substring(0, match.start).split('\n').length;
+            editor.scrollTop = (linesBeforeMatch - 5) * lineHeight;
+            
+            searchInfo.textContent = `Match ${currentMatchIndex + 1} of ${searchMatches.length}`;
+        }
+        
+        function replaceOne() {
+            const searchText = searchInput.value;
+            const replaceText = replaceInput.value;
+            
+            if (!searchText || currentMatchIndex < 0) return;
+            
+            saveToUndoStack();
+            
+            const match = searchMatches[currentMatchIndex];
+            editor.value = editor.value.substring(0, match.start) + replaceText + editor.value.substring(match.end);
+            
+            renderMarkdown(editor.value);
+            findMatches(searchText);
+            showToast('Replaced 1 match');
+        }
+        
+        function replaceAll() {
+            const searchText = searchInput.value;
+            const replaceText = replaceInput.value;
+            
+            if (!searchText) return;
+            
+            saveToUndoStack();
+            
+            const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            const count = (editor.value.match(regex) || []).length;
+            
+            editor.value = editor.value.replace(regex, replaceText);
+            renderMarkdown(editor.value);
+            
+            searchMatches = [];
+            currentMatchIndex = -1;
+            searchInfo.textContent = `Replaced ${count} match(es)`;
+            showToast(`Replaced ${count} matches`);
+        }
+        
+        // Word count
+        function updateWordCount() {
+            const text = editor.value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const chars = text.length;
+            const lines = text.split('\n').length;
+            wordCountEl.innerHTML = `<i class="fas fa-file-word"></i> ${words} words | ${chars} chars | ${lines} lines`;
+        }
+        
+        // Theme toggle
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('darkTheme', isDarkTheme);
+            themeBtn.innerHTML = isDarkTheme ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            showToast(isDarkTheme ? 'Dark theme enabled' : 'Light theme enabled');
+        }
+        
+        // Print function
+        function printDocument() {
+            window.print();
+        }
+        
+        // Export as HTML
+        function exportAsHTML() {
+            const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${currentFileName || 'Document'}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
+    <style>
+        body { max-width: 980px; margin: 40px auto; padding: 20px; }
+        .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; }
+    </style>
+</head>
+<body class="markdown-body">
+${preview.innerHTML}
+</body>
+</html>`;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (currentFileName || 'document').replace('.md', '') + '.html';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast('HTML exported!');
+        }
+        
+        // Insert Mermaid diagram template
+        function insertMermaid() {
+            const template = `\`\`\`mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E
+\`\`\``;
+            insertText(template);
+        }
+        
+        // Insert PlantUML diagram template
+        function insertPlantUML() {
+            const template = `\`\`\`plantuml
+@startuml
+actor User
+participant "System" as S
+database "Database" as DB
+
+User -> S: Request
+S -> DB: Query
+DB --> S: Result
+S --> User: Response
+@enduml
+\`\`\``;
+            insertText(template);
+        }
+        
+        // Insert Math formula
+        function insertMath() {
+            const template = `$$
+E = mc^2
+$$`;
+            insertText(template);
+        }
+        
+        // Insert Footnote
+        function insertFootnote() {
+            const footnoteNum = (editor.value.match(/\[\^\d+\]/g) || []).length + 1;
+            insertText(`[^${footnoteNum}]`);
+            // Also add footnote definition at the end
+            const definition = `\n\n[^${footnoteNum}]: Footnote text here`;
+            const cursorPos = editor.selectionStart;
+            editor.value = editor.value + definition;
+            editor.selectionStart = editor.selectionEnd = cursorPos;
         }
 
     </script>
