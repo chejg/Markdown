@@ -1665,19 +1665,19 @@
 </head>
 <body>
 ${content}
-<script>
-    window.onload = function() {
-        setTimeout(function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-        }, 300);
-    };
-</script>
 </body>
 </html>`;
             
             printWindow.document.write(printHTML);
             printWindow.document.close();
+            
+            // 等待内容加载后打印
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.onafterprint = function() { printWindow.close(); };
+                }, 300);
+            };
         }
         
         // Toggle wide mode
