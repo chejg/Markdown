@@ -69,8 +69,6 @@
             overflow: auto; 
             padding: 0; 
             background-color: white;
-            content-visibility: auto; 
-            contain-intrinsic-size: 1000px; 
         }
 
         #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; transition: max-width 0.3s ease; }
@@ -379,7 +377,8 @@
         @media print {
           /* 隐藏不需要打印的元素 */
           #sidebar, #toolbar, .diagram-toolbar, #word-count, 
-          #outline-panel, #search-panel, #pwa-banner, #dropzone {
+          #outline-panel, #search-panel, #pwa-banner, #dropzone,
+          .toast {
             display: none !important;
           }
           
@@ -408,9 +407,6 @@
             width: 100% !important;
             height: auto !important;
             overflow: visible !important;
-            content-visibility: visible !important;
-            contain-intrinsic-size: auto !important;
-            contain: none !important;
           }
           
           #preview {
@@ -1597,45 +1593,8 @@
         
         // Print function
         function printDocument() {
-            showToast('Preparing for print...');
-            
-            // 强制触发所有内容渲染
-            const originalContentVisibility = previewContainer.style.contentVisibility;
-            previewContainer.style.contentVisibility = 'visible';
-            
-            // 确保 Mermaid 图表已完全渲染
-            const mermaidElements = document.querySelectorAll('.mermaid:not([data-processed])');
-            if (mermaidElements.length > 0 && typeof mermaid !== 'undefined') {
-                try {
-                    mermaid.init(undefined, mermaidElements);
-                } catch (e) {
-                    console.warn('Mermaid render warning:', e);
-                }
-            }
-            
-            // 确保 KaTeX 公式已渲染
-            if (window.renderMathInElement) {
-                try {
-                    renderMathInElement(preview, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                        ],
-                        throwOnError: false
-                    });
-                } catch (e) {
-                    console.warn('KaTeX render warning:', e);
-                }
-            }
-            
-            // 延迟打印以确保所有异步内容已加载
-            setTimeout(() => {
-                window.print();
-                // 打印后恢复性能优化
-                setTimeout(() => {
-                    previewContainer.style.contentVisibility = originalContentVisibility;
-                }, 100);
-            }, 500);
+            // 直接打印，内容已在预览时渲染完成
+            window.print();
         }
         
         // Toggle wide mode
