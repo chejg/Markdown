@@ -71,7 +71,7 @@
             background-color: white;
         }
 
-        #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; transition: max-width 0.3s ease; }
+        #preview { max-width: 980px; margin: 0 auto; padding: 20px; font-size: 16px; line-height: 1.6; color: var(--text-color); word-wrap: break-word; }
         
         /* 宽屏模式 */
         .wide-mode #preview {
@@ -375,6 +375,13 @@
         
         /* Print styles */
         @media print {
+          /* 禁用所有过渡和动画 - 关键性能优化 */
+          *, *::before, *::after {
+            transition: none !important;
+            animation: none !important;
+            -webkit-transition: none !important;
+          }
+          
           /* 隐藏不需要打印的元素 */
           #sidebar, #toolbar, .diagram-toolbar, #word-count, 
           #outline-panel, #search-panel, #pwa-banner, #dropzone,
@@ -387,6 +394,7 @@
             display: block !important;
             height: auto !important;
             overflow: visible !important;
+            background: white !important;
           }
           
           #main-container {
@@ -407,12 +415,21 @@
             width: 100% !important;
             height: auto !important;
             overflow: visible !important;
+            background: white !important;
           }
           
           #preview {
             max-width: 100% !important;
             padding: 0 !important;
             margin: 0 !important;
+            background: white !important;
+          }
+          
+          /* 简化代码块样式 */
+          #preview pre, #preview code {
+            background: #f5f5f5 !important;
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
           }
           
           /* 确保图片和图表不被截断 */
@@ -437,6 +454,11 @@
           #preview table, #preview pre, #preview blockquote {
             page-break-inside: avoid;
             break-inside: avoid;
+          }
+          
+          /* 隐藏图标字体减少渲染 */
+          .fas, .fab, .far, .fa {
+            display: none !important;
           }
         }
         
@@ -1591,10 +1613,71 @@
             showToast(isDarkTheme ? 'Dark theme enabled' : 'Light theme enabled');
         }
         
-        // Print function
+        // Print function - 使用新窗口打印以提高性能
         function printDocument() {
-            // 直接打印，内容已在预览时渲染完成
+            // 创建一个简化的打印窗口
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            // 获取预览内容
+            const content = preview.innerHTML;
+            
+            // 构建简化的 HTML，只包含必要的样式
+            const printHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${currentFileName || 'Print Document'}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; 
+            color: #24292e; 
+            padding: 20px;
+            max-width: 100%;
+        }
+        h1, h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.25em; margin-top: 24px; margin-bottom: 16px; }
+        h4, h5, h6 { margin-top: 24px; margin-bottom: 16px; }
+        p { margin-bottom: 16px; }
+        pre { padding: 16px; background: #f6f8fa; border-radius: 6px; overflow: auto; margin-bottom: 16px; }
+        code { font-family: Consolas, monospace; font-size: 85%; background: rgba(27,31,35,0.05); padding: 0.2em 0.4em; border-radius: 3px; }
+        pre code { background: transparent; padding: 0; }
+        blockquote { padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin: 0 0 16px 0; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+        th, td { padding: 6px 13px; border: 1px solid #dfe2e5; }
+        tr:nth-child(2n) { background: #f6f8fa; }
+        img { max-width: 100%; }
+        ul, ol { padding-left: 2em; margin-bottom: 16px; }
+        a { color: #0366d6; text-decoration: none; }
+        hr { height: 0.25em; background: #e1e4e8; border: 0; margin: 24px 0; }
+        .diagram-toolbar { display: none !important; }
+        @media print {
+            body { padding: 0; }
+            pre, blockquote, table, img { page-break-inside: avoid; }
+            h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+${content}
+<script>
+    window.onload = function() {
+        setTimeout(function() {
             window.print();
+            window.onafterprint = function() { window.close(); };
+        }, 300);
+    };
+</script>
+</body>
+</html>`;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
         }
         
         // Toggle wide mode
